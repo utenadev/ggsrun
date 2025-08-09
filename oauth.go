@@ -1,4 +1,4 @@
-// Package main (oauth.go) : 
+// Package main (oauth.go) :
 // Get accesstoken using refreshtoken, and confirm condition of accesstoken.
 package main
 
@@ -22,74 +22,67 @@ import (
 	gettokenbyserviceaccount "github.com/tanaikech/go-gettokenbyserviceaccount"
 )
 
-// Goauth : 
-func (a *AuthContainer) goauth() error {
-	if a.useServiceAccount != "" {
-		if err := a.getAtFromSa(); err != nil {
+// doGoauth manages the OAuth2 flow.
+func doGoauth(initVal *InitVal, ggsrunCfg *GgsrunCfg, cs *Cs) error {
+	if initVal.useServiceAccount != "" {
+		accessToken, err := getAtFromSa(initVal.useServiceAccount, ggsrunCfg.Scopes)
+		if err != nil {
 			return fmt.Errorf("could not get access token from service account: %w", err)
 		}
-		a.Msg = append(a.Msg, "Service Account was used.")
+		ggsrunCfg.Accesstoken = accessToken
+		// TODO: Add a message to a proper message container
+		// a.Msg = append(a.Msg, "Service Account was used.")
 		return nil
 	}
-	if len(a.GgsrunCfg.Clientid) > 0 &&
-		len(a.GgsrunCfg.Clientsecret) > 0 &&
-		len(a.GgsrunCfg.Refreshtoken) > 0 {
-		if (a.InitVal.pstart.Unix()-a.GgsrunCfg.Expiresin) > 0 ||
-			len(a.GgsrunCfg.Accesstoken) == 0 {
-			if err := a.getAtoken(); err != nil {
+
+	if len(ggsrunCfg.Refreshtoken) > 0 {
+		if (initVal.pstart.Unix()-ggsrunCfg.Expiresin) > 0 || len(ggsrunCfg.Accesstoken) == 0 {
+			if err := getAtoken(ggsrunCfg); err != nil {
 				return err
 			}
-			return a.makecfgfile()
-		} else {
-			if a.InitVal.update {
-				return a.makecfgfile()
-			}
+			return makecfgfile(ggsrunCfg, initVal)
+		} else if initVal.update {
+			return makecfgfile(ggsrunCfg, initVal)
 		}
 	} else {
-		if err := a.readClientSecret(); err != nil {
+		if err := getNewAccesstoken(initVal, ggsrunCfg, cs); err != nil {
 			return err
 		}
-		if err := a.getNewAccesstoken(); err != nil {
-			return err
-		}
-		return a.makecfgfile()
+		return makecfgfile(ggsrunCfg, initVal)
 	}
-	a.Msg = append(a.Msg, "Access Token was was used.")
+	// TODO: Add a message to a proper message container
+	// a.Msg = append(a.Msg, "Access Token was was used.")
 	return nil
 }
 
-// ReAuth : 
-func (a *AuthContainer) reAuth() error {
-	if err := a.readClientSecret(); err != nil {
+// doReAuth performs a full re-authentication.
+func doReAuth(initVal *InitVal, ggsrunCfg *GgsrunCfg, cs *Cs) error {
+	if err := getNewAccesstoken(initVal, ggsrunCfg, cs); err != nil {
 		return err
 	}
-	if err := a.getNewAccesstoken(); err != nil {
-		return err
-	}
-	return a.makecfgfile()
+	return makecfgfile(ggsrunCfg, initVal)
 }
 
-// makecfgfile : 
-func (a *AuthContainer) makecfgfile() error {
-	btok, _ := json.MarshalIndent(a.GgsrunCfg, "", "\t")
+// makecfgfile creates the ggsrun.cfg file.
+func makecfgfile(ggsrunCfg *GgsrunCfg, initVal *InitVal) error {
+	btok, _ := json.MarshalIndent(ggsrunCfg, "", "\t")
 	var path string
-	if a.InitVal.usedDir == "work" {
-		path = a.InitVal.workdir
-	} else if a.InitVal.usedDir == "env" {
-		path = a.InitVal.cfgdir
+	if initVal.usedDir == "work" {
+		path = initVal.workdir
+	} else if initVal.usedDir == "env" {
+		path = initVal.cfgdir
 	} else {
-		return fmt.Errorf("configuration directory was not found: '%s'", a.InitVal.usedDir)
+		return fmt.Errorf("configuration directory was not found: '%s'", initVal.usedDir)
 	}
 	return ioutil.WriteFile(filepath.Join(path, cfgFile), btok, 0777)
 }
 
-// getAtoken : Retrieves accesstoken from refreshtoken. 
-func (a *AuthContainer) getAtoken() error {
-	a.Msg = append(a.Msg, "Got a new accesstoken.")
+// getAtoken retrieves a new access token from a refresh token.
+func getAtoken(ggsrunCfg *GgsrunCfg) error {
 	values := url.Values{}
-	values.Set("client_id", a.GgsrunCfg.Clientid)
-	values.Set("client_secret", a.GgsrunCfg.Clientsecret)
-	values.Set("refresh_token", a.GgsrunCfg.Refreshtoken)
+	values.Set("client_id", ggsrunCfg.Clientid)
+	values.Set("client_secret", ggsrunCfg.Clientsecret)
+	values.Set("refresh_token", ggsrunCfg.Refreshtoken)
 	values.Set("grant_type", "refresh_token")
 	r := &utl.RequestParams{
 		Method:      "POST",
@@ -103,21 +96,22 @@ func (a *AuthContainer) getAtoken() error {
 	if err != nil {
 		return fmt.Errorf("hint: If you use old ggsrun.cfg, please remove it and run 'ggsrun auth'. Then try again. API error: %w, Body: %s", err, body)
 	}
-	json.Unmarshal(body, &a.Atoken)
-	a.GgsrunCfg.Accesstoken = a.Atoken.Accesstoken
-	exp, err := a.chkAtoken()
+	var atoken Atoken
+	json.Unmarshal(body, &atoken)
+	ggsrunCfg.Accesstoken = atoken.Accesstoken
+	exp, err := chkAtoken(ggsrunCfg.Accesstoken)
 	if err != nil {
 		return err
 	}
-	a.GgsrunCfg.Expiresin = exp - 360 // 6 minutes as adjustment time
+	ggsrunCfg.Expiresin = exp - 360 // 6 minutes as adjustment time
 	return nil
 }
 
-// chkAtoken : For AuthContainer
-func (a *AuthContainer) chkAtoken() (int64, error) {
+// chkAtoken checks if an access token is valid.
+func chkAtoken(accessToken string) (int64, error) {
 	r := &utl.RequestParams{
 		Method:      "GET",
-		APIURL:      chkatutl + "tokeninfo?access_token=" + a.GgsrunCfg.Accesstoken,
+		APIURL:      chkatutl + "tokeninfo?access_token=" + accessToken,
 		Data:        nil,
 		Contenttype: "application/x-www-form-urlencoded",
 		Accesstoken: "",
@@ -127,11 +121,12 @@ func (a *AuthContainer) chkAtoken() (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	json.Unmarshal(body, &a.ChkAt)
-	if len(a.ChkAt.Error) > 0 {
-		return 0, fmt.Errorf("access token is invalid: %s", a.ChkAt.Error)
+	var chkAt ChkAt
+	json.Unmarshal(body, &chkAt)
+	if len(chkAt.Error) > 0 {
+		return 0, fmt.Errorf("access token is invalid: %s", chkAt.Error)
 	}
-	return strconv.ParseInt(a.ChkAt.Exp, 10, 64)
+	return strconv.ParseInt(chkAt.Exp, 10, 64)
 }
 
 // chkAtokenForExecution : For ExecutionContainer
@@ -153,26 +148,26 @@ func (e *ExecutionContainer) chkAtokenForExecution() (*ChkAt, error) {
 	return &c, nil
 }
 
-func (a *AuthContainer) chkRedirectURI() bool {
-	for _, e := range a.Cs.Cid.Redirecturis {
+// getCode retrieves the authorization code from Google.
+func getCode(initVal *InitVal, scopes []string, cs *Cs) (string, error) {
+	p := initVal.Port
+	var hasLocalhost bool
+	for _, e := range cs.Cid.Redirecturis {
 		if strings.Contains(e, "localhost") {
-			return true
+			hasLocalhost = true
+			break
 		}
 	}
-	return false
-}
-
-func (a *AuthContainer) getCode() (string, error) {
-	p := a.InitVal.Port
-	if !a.chkRedirectURI() {
+	if !hasLocalhost {
 		return "", fmt.Errorf("go manual mode")
 	}
+
 	fmt.Printf("\n### This is a automatic input mode.\n### Please follow opened browser, login Google and click authentication.\n### It will move to a manual mode if you wait for 30 seconds under this situation.\n")
-	a.Cs.Cid.Redirecturis = append(a.Cs.Cid.Redirecturis, "http://localhost:"+strconv.Itoa(p)+"/")
+	redirectURI := "http://localhost:" + strconv.Itoa(p) + "/"
 	codepara := url.Values{}
-	codepara.Set("client_id", a.Cs.Cid.ClientID)
-	codepara.Set("redirect_uri", a.Cs.Cid.Redirecturis[len(a.Cs.Cid.Redirecturis)-1])
-	codepara.Set("scope", strings.Join(a.GgsrunCfg.Scopes, " "))
+	codepara.Set("client_id", cs.Cid.ClientID)
+	codepara.Set("redirect_uri", redirectURI)
+	codepara.Set("scope", strings.Join(scopes, " "))
 	codepara.Set("response_type", "code")
 	codepara.Set("approval_prompt", "force")
 	codepara.Set("access_type", "offline")
@@ -238,17 +233,18 @@ func (a *AuthContainer) getCode() (string, error) {
 	return result.Code, nil
 }
 
-// getNewAccesstoken : Retrieve accesstoken when there is no refreshtoken. 
-func (a *AuthContainer) getNewAccesstoken() error {
+// getNewAccesstoken retrieves a new access and refresh token.
+func getNewAccesstoken(initVal *InitVal, ggsrunCfg *GgsrunCfg, cs *Cs) error {
 	var code string
 	var err error
 	fmt.Printf("\n### Since %s is not found, the authorization process is launched.", cfgFile)
-	code, err = a.getCode()
+	redirectURI := cs.Cid.Redirecturis[0]
+	code, err = getCode(initVal, ggsrunCfg.Scopes, cs)
 	if err != nil {
 		codepara := url.Values{}
-		codepara.Set("client_id", a.Cs.Cid.ClientID)
-		codepara.Set("redirect_uri", a.Cs.Cid.Redirecturis[0])
-		codepara.Set("scope", strings.Join(a.GgsrunCfg.Scopes, " "))
+		codepara.Set("client_id", cs.Cid.ClientID)
+		codepara.Set("redirect_uri", redirectURI)
+		codepara.Set("scope", strings.Join(ggsrunCfg.Scopes, " "))
 		codepara.Set("response_type", "code")
 		codepara.Set("approval_prompt", "force")
 		codepara.Set("access_type", "offline")
@@ -259,14 +255,13 @@ func (a *AuthContainer) getNewAccesstoken() error {
 		if _, err := fmt.Scan(&code); err != nil {
 			return fmt.Errorf("could not read code from stdin: %w", err)
 		}
-		a.Cs.Cid.Redirecturis = append(a.Cs.Cid.Redirecturis, a.Cs.Cid.Redirecturis[0])
 	}
 	tokenparams := url.Values{}
-	tokenparams.Set("client_id", a.Cs.Cid.ClientID)
-	tokenparams.Set("client_secret", a.Cs.Cid.Clientsecret)
-	tokenparams.Set("redirect_uri", a.Cs.Cid.Redirecturis[len(a.Cs.Cid.Redirecturis)-1])
+	tokenparams.Set("client_id", cs.Cid.ClientID)
+	tokenparams.Set("client_secret", cs.Cid.Clientsecret)
+	tokenparams.Set("redirect_uri", redirectURI)
 	tokenparams.Set("code", code)
-	ttokenparams.Set("grant_type", "authorization_code")
+	tokenparams.Set("grant_type", "authorization_code")
 	r := &utl.RequestParams{
 		Method:      "POST",
 		APIURL:      oauthurl + "token",
@@ -279,35 +274,35 @@ func (a *AuthContainer) getNewAccesstoken() error {
 	if err != nil {
 		return fmt.Errorf("code is wrong: %w", err)
 	}
-	json.Unmarshal(body, &a.Atoken)
-	a.GgsrunCfg.Clientid = a.Cs.Cid.ClientID
-	a.GgsrunCfg.Clientsecret = a.Cs.Cid.Clientsecret
-	a.GgsrunCfg.Refreshtoken = a.Atoken.Refreshtoken
-	a.GgsrunCfg.Accesstoken = a.Atoken.Accesstoken
-	exp, err := a.chkAtoken()
+	var atoken Atoken
+	json.Unmarshal(body, &atoken)
+	ggsrunCfg.Clientid = cs.Cid.ClientID
+	ggsrunCfg.Clientsecret = cs.Cid.Clientsecret
+	ggsrunCfg.Refreshtoken = atoken.Refreshtoken
+	ggsrunCfg.Accesstoken = atoken.Accesstoken
+	exp, err := chkAtoken(ggsrunCfg.Accesstoken)
 	if err != nil {
 		return err
 	}
-	a.GgsrunCfg.Expiresin = exp - 360 // 6 minutes as adjustment time
+	ggsrunCfg.Expiresin = exp - 360 // 6 minutes as adjustment time
 	return nil
 }
 
-// getAtFromSa : Retrieve access token from Service Account
-func (a *AuthContainer) getAtFromSa() error {
-	credentialsData, err := ioutil.ReadFile(a.useServiceAccount)
+// getAtFromSa retrieves an access token from a service account.
+func getAtFromSa(useServiceAccount string, scopes []string) (string, error) {
+	credentialsData, err := ioutil.ReadFile(useServiceAccount)
 	if err != nil {
-		return err
+		return "", err
 	}
 	para := struct {
 		PrivateKey  string `json:"private_key"`
 		ClientEmail string `json:"client_email"`
 	}{}
 	json.Unmarshal(credentialsData, &para)
-	scopes := strings.Join(a.Scopes, " ")
-	res, err := gettokenbyserviceaccount.Do(para.PrivateKey, para.ClientEmail, "", scopes)
+	scope := strings.Join(scopes, " ")
+	res, err := gettokenbyserviceaccount.Do(para.PrivateKey, para.ClientEmail, "", scope)
 	if err != nil {
-		return err
+		return "", err
 	}
-	a.GgsrunCfg.Accesstoken = res.AccessToken
-	return nil
+	return res.AccessToken, nil
 }

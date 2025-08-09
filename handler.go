@@ -15,24 +15,21 @@ import (
 // exeAPIWithout : exe1
 // Update project and Execution API withour server script.
 func exeAPIWithout(c *cli.Context) error {
-	a, err := defAuthContainer(c)
+	initVal, resMsg, ggsrunCfg, param, cs, _, _, err := newAuthContainer(c)
 	if err != nil {
 		return err
 	}
 
-	// Call the new standalone initializer
-	ggsrunCfg, param, cs, err := doGgsrunIni(c, a.InitVal)
+	ggsrunCfg, param, cs, err = doGgsrunIni(c, initVal)
 	if err != nil {
 		return err
 	}
-	a.GgsrunCfg = ggsrunCfg
-	a.Param = param
-	a.Cs = cs
 
-	if err := a.goauth(); err != nil {
+	if err := doGoauth(initVal, ggsrunCfg, cs); err != nil {
 		return err
 	}
-	e, err := a.defExecutionContainer()
+
+	e, err := newExecutionContainer(initVal, resMsg, ggsrunCfg, param)
 	if err != nil {
 		return err
 	}

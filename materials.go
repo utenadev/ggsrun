@@ -98,8 +98,7 @@ type Atoken struct {
 // ChkAt : Condition of accesstoken retrieved using Drive API
 type ChkAt struct {
 	Azu        string `json:"azu,omitempty"`
-	Aud        string `json:"aud,omitempty"`
-	Scope      string `json:"scope,omitempty"`
+	Aud        string `json:"aud,omitempty"`	Scope      string `json:"scope,omitempty"`
 	Exp        string `json:"exp,omitempty"`
 	Expiresin  string `json:"expires_in,omitempty"`
 	Accesstype string `json:"access_type,omitempty"`
@@ -173,7 +172,7 @@ type FeedBackData struct {
 	} `json:"error"`
 }
 
-// ErrorMsg :
+// ErrorMsg : 
 type ErrorMsg struct {
 	Type                     string `json:"@type,omitempty"`
 	ErrorMessage             string `json:"errorMessage,omitempty"`
@@ -264,46 +263,41 @@ type ExecutionContainer struct {
 	*updateProjectFiles // Files for updating Project
 }
 
-// DefAuthContainer : Struct container for authorization
-func defAuthContainer(c *cli.Context) *AuthContainer {
+// newAuthContainer initializes and returns core components for authentication.
+func newAuthContainer(c *cli.Context) (*InitVal, *ResMsg, *GgsrunCfg, *Param, *Cs, *Atoken, *ChkAt, error) {
+	initVal := &InitVal{}
+	resMsg := &ResMsg{}
+	ggsrunCfg := &GgsrunCfg{}
+	param := &Param{}
+	cs := &Cs{}
+	atoken := &Atoken{}
+	chkAt := &ChkAt{}
+
 	var err error
-	a := &AuthContainer{
-		&InitVal{},
-		&ResMsg{},
-		&GgsrunCfg{},
-		&Param{},
-		&Cs{},
-		&Atoken{},
-		&ChkAt{},
-	}
-	a.InitVal.pstart = time.Now()
-	a.InitVal.workdir, err = filepath.Abs(".")
+	initVal.pstart = time.Now()
+	initVal.workdir, err = filepath.Abs(".")
 	if err != nil {
-		panic(err)
+		return nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("could not get current working directory: %w", err)
 	}
 	if c.Command.Names()[0] == "auth" {
-		a.InitVal.cfgdir = a.InitVal.workdir
+		initVal.cfgdir = initVal.workdir
 	} else {
-		a.InitVal.cfgdir = os.Getenv(cfgpathenv)
-		if a.InitVal.cfgdir == "" {
-			a.InitVal.cfgdir = a.InitVal.workdir
+		initVal.cfgdir = os.Getenv(cfgpathenv)
+		if initVal.cfgdir == "" {
+			initVal.cfgdir = initVal.workdir
 		}
 	}
-	a.Param.Function = c.String("function")
-	a.InitVal.log = c.Bool("log")
-	a.InitVal.Port = defPort
+	param.Function = c.String("function")
+	initVal.log = c.Bool("log")
+	initVal.Port = defPort
 	if c.Command.Names()[0] == "auth" {
 		if c.Int("port") != 0 {
-			a.InitVal.Port = c.Int("port")
+			initVal.Port = c.Int("port")
 		}
 	}
 
 	// Default scopes for using Execution API and Drive API
-	// If you want to use own scopes, please write them to configuration file.
-	// They are used for retrieving access token.
-	//
-	// From v1.4.0, https://www.googleapis.com/auth/script.projects was added to scope.
-	a.GgsrunCfg.Scopes = []string{
+	ggsrunCfg.Scopes = []string{
 		"https://www.googleapis.com/auth/drive",
 		"https://www.googleapis.com/auth/drive.file",
 		"https://www.googleapis.com/auth/drive.scripts",
@@ -314,27 +308,23 @@ func defAuthContainer(c *cli.Context) *AuthContainer {
 	}
 
 	// Use Service Account
-	a.useServiceAccount = c.String("serviceaccount")
-	return a
+	initVal.useServiceAccount = c.String("serviceaccount")
+	return initVal, resMsg, ggsrunCfg, param, cs, atoken, chkAt, nil
 }
 
-// DefExecutionContainer : Struct container for using Execution API
-func (a *AuthContainer) defExecutionContainer() *ExecutionContainer {
+// newExecutionContainer initializes and returns an ExecutionContainer.
+func newExecutionContainer(initVal *InitVal, resMsg *ResMsg, ggsrunCfg *GgsrunCfg, param *Param) (*ExecutionContainer, error) {
 	e := &ExecutionContainer{
-		&InitVal{},
-		&ResMsg{},
-		&GgsrunCfg{},
-		&Param{},
-		&FeedBackData{},
-		&Project{},
-		&DlFileByScript{},
-		&updateProjectFiles{},
+		InitVal:             initVal,
+		ResMsg:              resMsg,
+		GgsrunCfg:           ggsrunCfg,
+		Param:               param,
+		FeedBackData:        &FeedBackData{},
+		Project:             &Project{},
+		DlFileByScript:      &DlFileByScript{},
+		updateProjectFiles:  &updateProjectFiles{},
 	}
-	e.GgsrunCfg = a.GgsrunCfg
-	e.InitVal = a.InitVal
-	e.Msg = a.Msg
-	e.Param = a.Param
-	return e
+	return e, nil
 }
 
 // DefExecutionContainerWebApps : Struct container for using WebApps
@@ -353,7 +343,7 @@ func defExecutionContainerWebApps() *ExecutionContainer {
 	e.InitVal.pstart = time.Now()
 	e.InitVal.workdir, err = filepath.Abs(".")
 	if err != nil {
-		panic(err)
+		panic(err) // This panic should be replaced with error return
 	}
 	e.InitVal.cfgdir = os.Getenv(cfgpathenv)
 	if e.InitVal.cfgdir == "" {
