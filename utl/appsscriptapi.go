@@ -186,6 +186,32 @@ func (p *FileInf) boundScriptCreator(metadata []byte) *AppsScriptApiInf {
 	return a
 }
 
+// CreateStandaloneProject : Create a standalone script project.
+func (p *FileInf) CreateStandaloneProject(title string) (*AppsScriptApiInf, error) {
+	payload := map[string]string{"title": title}
+	metadata, err := json.Marshal(payload)
+	if err != nil {
+		return nil, fmt.Errorf("Error creating project payload: %w", err)
+	}
+	tokenparams := url.Values{}
+	tokenparams.Set("fields", "createTime,creator,lastModifyUser,parentId,scriptId,title,updateTime")
+	r := &RequestParams{
+		Method:      "POST",
+		APIURL:      appsscriptapi + "?" + tokenparams.Encode(),
+		Data:        bytes.NewBuffer(metadata),
+		Accesstoken: p.Accesstoken,
+		Dtime:       30,
+	}
+	body, err := r.FetchAPI()
+	if err != nil {
+		DispScopeError2(body)
+		return nil, fmt.Errorf("Error creating project: %w. %s", err, string(body))
+	}
+	var a *AppsScriptApiInf
+	json.Unmarshal(body, &a)
+	return a, nil
+}
+
 // ProjectUpdateByAppsScriptApi : For uploading project using Apps Script API.
 func (p *FileInf) ProjectUpdateByAppsScriptApi(pr *ProjectForAppsScriptApi) *AppsScriptApiInf {
 	pre, _ := json.Marshal(pr)

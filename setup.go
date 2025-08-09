@@ -1,3 +1,26 @@
+// Package main (setup.go) :
+// These methods are for interactive setup.
+package main
+
+import (
+	"bufio"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+
+	"ggsrun/utl"
+
+	"github.com/urfave/cli"
+)
+
+const gcpProjectURL = "https://console.cloud.google.com/projectcreate"
+const gcpCredURL = "https://console.cloud.google.com/apis/credentials"
+const scriptEditorURL = "https://script.google.com/d/%s/edit"
+
+// serverScriptContent holds the content of server/server.gs
+const serverScriptContent = `
 var VERSION = "1.0.0";
 var IGGSRUN;
 
@@ -94,14 +117,7 @@ function Beacon() {
               var resValues = (0,eval)((0,eval)(rec.com));
               res = emessage.call(this, rec.com ? resValues : "Error on GAS side: Bad parameters.", startTime, dateDat);
           } catch(err) {
-              var errorDetail = {
-                gasError: {
-                  name: err.name,
-                  message: err.message,
-                  stack: err.stack,
-                }
-              };
-              res = emessage.call(this, errorDetail, startTime);
+              res = emessage.call(this, "Script Error on GAS side: " + err.message, startTime);
           }
           return res;
       };

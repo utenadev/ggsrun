@@ -217,6 +217,15 @@ type ByteSliceFile struct {
 	MimeType string `json:"mimeType"`
 }
 
+// GasError : Detailed error from GAS execution
+type GasError struct {
+	GasError struct {
+		Name    string `json:"name"`
+		Message string `json:"message"`
+		Stack   string `json:"stack"`
+	} `json:"gasError"`
+}
+
 // serverInfToGetCode : For getting auth code
 type serverInfToGetCode struct {
 	Response chan authCode

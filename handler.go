@@ -145,6 +145,11 @@ func reAuth(c *cli.Context) error {
 	return nil
 }
 
+// interactiveSetup : New handler for 'init' command
+func interactiveSetup(c *cli.Context) error {
+	return RunInteractiveSetup(c)
+}
+
 // dispResult : Display result
 func (e *ExecutionContainer) dispResult(c *cli.Context) {
 	var dispRes []byte

@@ -22,6 +22,26 @@ import (
 	"github.com/urfave/cli"
 )
 
+// handleGasError checks for and formats a detailed error from the GAS execution result.
+func handleGasError(result interface{}) (string, bool) {
+	resultBytes, err := json.Marshal(result)
+	if err != nil {
+		return "", false
+	}
+
+	var gasErr GasError
+	if err := json.Unmarshal(resultBytes, &gasErr); err == nil && gasErr.GasError.Message != "" {
+		formattedError := fmt.Sprintf(
+			"--- Google Apps Script Execution Error ---\nError Type: %s\nMessage: %s\nStack Trace:\n%s\n--------------------------------------------",
+			gasErr.GasError.Name,
+			gasErr.GasError.Message,
+			gasErr.GasError.Stack,
+		)
+		return formattedError, true
+	}
+	return "", false
+}
+
 // Exe1Function :
 func (e *ExecutionContainer) exe1Function(c *cli.Context) *ExecutionContainer {
 	if len(c.String("scriptfile")) > 0 || c.Bool("backup") {
@@ -166,7 +186,13 @@ func (e *ExecutionContainer) esenderForExe1(c *cli.Context) *ExecutionContainer 
 	} else {
 		var rs map[string]interface{}
 		json.Unmarshal(body, &rs)
-		e.FeedBackData.Response.Result.Result = rs["response"].(map[string]interface{})["result"]
+		result := rs["response"].(map[string]interface{})["result"]
+		if formattedError, isGasError := handleGasError(result); isGasError {
+			e.Msg = append(e.Msg, formattedError)
+			e.FeedBackData.Response.Result.Result = nil // Clear the result to avoid double printing
+		} else {
+			e.FeedBackData.Response.Result.Result = result
+		}
 	}
 	if len(e.FeedBackData.Error.Detailes) > 0 {
 		dat = fmt.Sprintf("{detailmessage: %s}", e.FeedBackData.Error.Detailes[0].ErrorMessage)
@@ -206,29 +232,36 @@ func (e *ExecutionContainer) esenderForExe2(c *cli.Context) *ExecutionContainer 
 		e.Msg = append(e.Msg, dat)
 		return e
 	}
-	e.FeedBackData.Response.Result.TotalEt = math.Trunc(time.Since(e.InitVal.pstart).Seconds()*1000) / 1000
-	e.FeedBackData.Response.Result.Uapi = eapir2
-	dlfileinf, _ := json.Marshal(e.FeedBackData.Response.Result.Result)
-	var rs map[string]interface{}
-	if err := json.Unmarshal(dlfileinf, &rs); err == nil {
-		fid, ok := rs["fileid"].(string)
-		if ok {
-			e.DlFileByScript.Fileid = fid
-		}
-		exn, ok := rs["extension"].(string)
-		if ok {
-			e.DlFileByScript.Extension = exn
-		}
-		if len(fid) > 0 && len(exn) > 0 {
-			delete(rs, "fileid")
-			delete(rs, "extension")
-			e.FeedBackData.Response.Result.Result = rs
-			res := e.defDownloadByScriptContainer().
-				GetFileinf().
-				Downloader(c)
-			e.Msg = append(e.Msg, res.Msgar...)
+
+	if formattedError, isGasError := handleGasError(e.FeedBackData.Response.Result.Result); isGasError {
+		e.Msg = append(e.Msg, formattedError)
+		e.FeedBackData.Response.Result.Result = nil // Clear the result to avoid double printing
+	} else {
+		dlfileinf, _ := json.Marshal(e.FeedBackData.Response.Result.Result)
+		var rs map[string]interface{}
+		if err := json.Unmarshal(dlfileinf, &rs); err == nil {
+			fid, ok := rs["fileid"].(string)
+			if ok {
+				e.DlFileByScript.Fileid = fid
+			}
+			exn, ok := rs["extension"].(string)
+			if ok {
+				e.DlFileByScript.Extension = exn
+			}
+			if len(fid) > 0 && len(exn) > 0 {
+				delete(rs, "fileid")
+				delete(rs, "extension")
+				e.FeedBackData.Response.Result.Result = rs
+				res := e.defDownloadByScriptContainer().
+					GetFileinf().
+					Downloader(c)
+				e.Msg = append(e.Msg, res.Msgar...)
+			}
 		}
 	}
+
+	e.FeedBackData.Response.Result.TotalEt = math.Trunc(time.Since(e.InitVal.pstart).Seconds()*1000) / 1000
+	e.FeedBackData.Response.Result.Uapi = eapir2
 	e.Msg = append(e.Msg, fmt.Sprintf("'%s()' in the script was run using ggsrun server. Server function is '%s()'.", deffuncwith, e.Param.Function))
 	return e
 }
@@ -252,53 +285,6 @@ func (e *ExecutionContainer) projectUpdateIni(sendscript string) *ExecutionConta
 	}
 	return e
 }
-
-// ProjectUpdate : In this method, the project is updated using Drive API.
-// func (e *ExecutionContainer) projectUpdate() *ExecutionContainer {
-// 	script, _ := json.Marshal(e.Project)
-// 	metadata, _ := json.Marshal(&ProjectUpdaterMeta{MimeType: "application/vnd.google-apps.script"})
-// 	tokenparams := url.Values{}
-// 	tokenparams.Set("fields", "id,mimeType,name,parents")
-// 	var b bytes.Buffer
-// 	w := multipart.NewWriter(&b)
-// 	part := make(textproto.MIMEHeader)
-// 	part.Set("Content-Type", "application/json")
-// 	data, err := w.CreatePart(part)
-// 	if err != nil {
-// 		fmt.Fprintf(os.Stderr, "Error: %v. ", err)
-// 		os.Exit(1)
-// 	}
-// 	if _, err = io.Copy(data, bytes.NewReader(metadata)); err != nil {
-// 		fmt.Fprintf(os.Stderr, "Error: %v. ", err)
-// 		os.Exit(1)
-// 	}
-// 	data, err = w.CreatePart(part)
-// 	if err != nil {
-// 		fmt.Fprintf(os.Stderr, "Error: %v. ", err)
-// 		os.Exit(1)
-// 	}
-// 	if _, err = io.Copy(data, bytes.NewReader(script)); err != nil {
-// 		fmt.Fprintf(os.Stderr, "Error: %v. ", err)
-// 		os.Exit(1)
-// 	}
-// 	w.Close()
-// 	r := &utl.RequestParams{
-// 		Method:      "PATCH",
-// 		APIURL:      uploadurl + e.GgsrunCfg.Scriptid + "?uploadType=multipart&" + tokenparams.Encode(),
-// 		Data:        &b,
-// 		Contenttype: w.FormDataContentType(),
-// 		Accesstoken: e.GgsrunCfg.Accesstoken,
-// 		Dtime:       10,
-// 	}
-// 	res, err := r.FetchAPI()
-// 	if err != nil {
-// 		fmt.Fprintf(os.Stderr, "Error: Project cannot be updated.\n- Reason 1: If you try to execute your script, may your project be not a stand alone script? 'e1' command cannot be used to the stand alone script. Even if your script is a bound script, you can download a project using '-b' option.\n- Reason 2: If you try to update your project, scripts and json data that you uploaded may be wrong format.\n\n%v\n", string(res))
-// 		os.Exit(1)
-// 	}
-// 	e.Msg = append(e.Msg, "Project was updated.")
-// 	_ = res
-// 	return e
-// }
 
 // projectUpdate2 : In this method, the project is updated using Apps Script API.
 func (e *ExecutionContainer) projectUpdate2() *ExecutionContainer {
