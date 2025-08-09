@@ -6,25 +6,22 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 
 	"github.com/urfave/cli"
 )
 
 // GgsrunIni : Initialize ggsrun
-func (a *AuthContainer) ggsrunIni(c *cli.Context) *AuthContainer {
+func (a *AuthContainer) ggsrunIni(c *cli.Context) error {
 	if cfgdata, err := a.chkInitFile(cfgFile); err == nil {
 		err = json.Unmarshal(cfgdata, &a.GgsrunCfg)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: Format error of '%s'.\n", cfgFile)
-			os.Exit(1)
+			return fmt.Errorf("format error of '%s'", cfgFile)
 		}
 		if c.Command.Names()[0] == "exe1" ||
 			c.Command.Names()[0] == "exe2" {
 			if len(c.String("scriptid")) == 0 && len(a.GgsrunCfg.Scriptid) == 0 {
-				fmt.Fprintf(os.Stderr, "Error: No script id. Please use option '-i [Script ID]'.\n")
-				os.Exit(1)
+				return fmt.Errorf("no script id. Please use option '-i [Script ID]'")
 			}
 			if len(c.String("scriptid")) > 0 {
 				a.GgsrunCfg.Scriptid = c.String("scriptid")
@@ -37,25 +34,23 @@ func (a *AuthContainer) ggsrunIni(c *cli.Context) *AuthContainer {
 	} else {
 		return a.readClientSecret()
 	}
-	return a
+	return nil
 }
 
 // readClientSecret : Read client secret file
-func (a *AuthContainer) readClientSecret() *AuthContainer {
+func (a *AuthContainer) readClientSecret() error {
 	if csecret, err := a.chkInitFile(clientsecretFile); err == nil {
 		err := json.Unmarshal(csecret, &a.Cs)
 		if err != nil || (len(a.Cs.Cid.ClientID) == 0 && len(a.Cs.Ciw.ClientID) == 0) {
-			fmt.Fprintf(os.Stderr, "Error: Please confirm '%s'.\nError is %s.\n", clientsecretFile, err)
-			os.Exit(1)
+			return fmt.Errorf("please confirm '%s'. Error is %s", clientsecretFile, err)
 		}
 		if len(a.Cs.Cid.ClientID) == 0 && len(a.Cs.Ciw.ClientID) > 0 {
 			a.Cs.Cid = a.Cs.Ciw
 		}
 	} else {
-		fmt.Fprintf(os.Stderr, "Error: No materials for retrieving accesstoken. Please download '%s'.\n", clientsecretFile)
-		os.Exit(1)
+		return fmt.Errorf("no materials for retrieving accesstoken. Please download '%s'", clientsecretFile)
 	}
-	return a
+	return nil
 }
 
 // chkInitFile : Check initial files.

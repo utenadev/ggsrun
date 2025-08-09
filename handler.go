@@ -15,14 +15,28 @@ import (
 // exeAPIWithout : exe1
 // Update project and Execution API withour server script.
 func exeAPIWithout(c *cli.Context) error {
-	defAuthContainer(c).
-		ggsrunIni(c).
-		goauth().
-		defExecutionContainer().
-		exe1Function(c).
-		executionAPIwithoutServer(c).
-		esenderForExe1(c).
-		dispResult(c)
+	a, err := defAuthContainer(c)
+	if err != nil {
+		return err
+	}
+	if err := a.ggsrunIni(c); err != nil {
+		return err
+	}
+	if err := a.goauth(); err != nil {
+		return err
+	}
+	e, err := a.defExecutionContainer()
+	if err != nil {
+		return err
+	}
+	if err := e.exe1Function(c); err != nil {
+		return err
+	}
+	e.executionAPIwithoutServer(c)
+	if err := e.esenderForExe1(c); err != nil {
+		return err
+	}
+	e.dispResult(c)
 	return nil
 }
 

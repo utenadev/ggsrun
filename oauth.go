@@ -1,4 +1,4 @@
-// Package main (oauth.go) :
+// Package main (oauth.go) : 
 // Get accesstoken using refreshtoken, and confirm condition of accesstoken.
 package main
 
@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -23,41 +22,55 @@ import (
 	gettokenbyserviceaccount "github.com/tanaikech/go-gettokenbyserviceaccount"
 )
 
-// Goauth :
-func (a *AuthContainer) goauth() *AuthContainer {
+// Goauth : 
+func (a *AuthContainer) goauth() error {
 	if a.useServiceAccount != "" {
 		if err := a.getAtFromSa(); err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %s\n", err)
-			os.Exit(1)
+			return fmt.Errorf("could not get access token from service account: %w", err)
 		}
 		a.Msg = append(a.Msg, "Service Account was used.")
-		return a
+		return nil
 	}
 	if len(a.GgsrunCfg.Clientid) > 0 &&
 		len(a.GgsrunCfg.Clientsecret) > 0 &&
 		len(a.GgsrunCfg.Refreshtoken) > 0 {
 		if (a.InitVal.pstart.Unix()-a.GgsrunCfg.Expiresin) > 0 ||
 			len(a.GgsrunCfg.Accesstoken) == 0 {
-			a.getAtoken().makecfgfile()
+			if err := a.getAtoken(); err != nil {
+				return err
+			}
+			return a.makecfgfile()
 		} else {
 			if a.InitVal.update {
-				a.makecfgfile()
+				return a.makecfgfile()
 			}
 		}
 	} else {
-		a.readClientSecret().getNewAccesstoken().makecfgfile()
+		if err := a.readClientSecret(); err != nil {
+			return err
+		}
+		if err := a.getNewAccesstoken(); err != nil {
+			return err
+		}
+		return a.makecfgfile()
 	}
 	a.Msg = append(a.Msg, "Access Token was was used.")
-	return a
+	return nil
 }
 
-// ReAuth :
-func (a *AuthContainer) reAuth() {
-	a.readClientSecret().getNewAccesstoken().makecfgfile()
+// ReAuth : 
+func (a *AuthContainer) reAuth() error {
+	if err := a.readClientSecret(); err != nil {
+		return err
+	}
+	if err := a.getNewAccesstoken(); err != nil {
+		return err
+	}
+	return a.makecfgfile()
 }
 
-// makecfgfile :
-func (a *AuthContainer) makecfgfile() {
+// makecfgfile : 
+func (a *AuthContainer) makecfgfile() error {
 	btok, _ := json.MarshalIndent(a.GgsrunCfg, "", "\t")
 	var path string
 	if a.InitVal.usedDir == "work" {
@@ -65,14 +78,13 @@ func (a *AuthContainer) makecfgfile() {
 	} else if a.InitVal.usedDir == "env" {
 		path = a.InitVal.cfgdir
 	} else {
-		fmt.Fprintf(os.Stderr, "Error: directory. '%s'\n", a.InitVal.usedDir)
-		os.Exit(1)
+		return fmt.Errorf("configuration directory was not found: '%s'", a.InitVal.usedDir)
 	}
-	ioutil.WriteFile(filepath.Join(path, cfgFile), btok, 0777)
+	return ioutil.WriteFile(filepath.Join(path, cfgFile), btok, 0777)
 }
 
-// getAtoken : Retrieves accesstoken from refreshtoken.
-func (a *AuthContainer) getAtoken() *AuthContainer {
+// getAtoken : Retrieves accesstoken from refreshtoken. 
+func (a *AuthContainer) getAtoken() error {
 	a.Msg = append(a.Msg, "Got a new accesstoken.")
 	values := url.Values{}
 	values.Set("client_id", a.GgsrunCfg.Clientid)
@@ -89,18 +101,20 @@ func (a *AuthContainer) getAtoken() *AuthContainer {
 	}
 	body, err := r.FetchAPI()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v. %s\n", err, body)
-		fmt.Println("Hint: If you use old ggsrun.cfg, please remove it and run 'ggsrun auth'. Then try again.")
-		os.Exit(1)
+		return fmt.Errorf("hint: If you use old ggsrun.cfg, please remove it and run 'ggsrun auth'. Then try again. API error: %w, Body: %s", err, body)
 	}
 	json.Unmarshal(body, &a.Atoken)
 	a.GgsrunCfg.Accesstoken = a.Atoken.Accesstoken
-	a.GgsrunCfg.Expiresin = a.chkAtoken() - 360 // 6 minutes as adjustment time
-	return a
+	exp, err := a.chkAtoken()
+	if err != nil {
+		return err
+	}
+	a.GgsrunCfg.Expiresin = exp - 360 // 6 minutes as adjustment time
+	return nil
 }
 
 // chkAtoken : For AuthContainer
-func (a *AuthContainer) chkAtoken() int64 {
+func (a *AuthContainer) chkAtoken() (int64, error) {
 	r := &utl.RequestParams{
 		Method:      "GET",
 		APIURL:      chkatutl + "tokeninfo?access_token=" + a.GgsrunCfg.Accesstoken,
@@ -111,19 +125,17 @@ func (a *AuthContainer) chkAtoken() int64 {
 	}
 	body, err := r.FetchAPI()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v. ", err)
-		os.Exit(1)
+		return 0, err
 	}
 	json.Unmarshal(body, &a.ChkAt)
 	if len(a.ChkAt.Error) > 0 {
-		a.getAtoken()
+		return 0, fmt.Errorf("access token is invalid: %s", a.ChkAt.Error)
 	}
-	exp, _ := strconv.ParseInt(a.ChkAt.Exp, 10, 64)
-	return exp
+	return strconv.ParseInt(a.ChkAt.Exp, 10, 64)
 }
 
-// chkAtoken : For ExecutionContainer
-func (e *ExecutionContainer) chkAtoken() *ChkAt {
+// chkAtokenForExecution : For ExecutionContainer
+func (e *ExecutionContainer) chkAtokenForExecution() (*ChkAt, error) {
 	r := &utl.RequestParams{
 		Method:      "GET",
 		APIURL:      chkatutl + "tokeninfo?access_token=" + e.GgsrunCfg.Accesstoken,
@@ -132,10 +144,13 @@ func (e *ExecutionContainer) chkAtoken() *ChkAt {
 		Accesstoken: "",
 		Dtime:       10,
 	}
-	body, _ := r.FetchAPI()
+	body, err := r.FetchAPI()
+	if err != nil {
+		return nil, err
+	}
 	var c ChkAt
 	json.Unmarshal(body, &c)
-	return &c
+	return &c, nil
 }
 
 func (a *AuthContainer) chkRedirectURI() bool {
@@ -195,7 +210,6 @@ func (a *AuthContainer) getCode() (string, error) {
 		<-s.End
 		Listener.Close()
 		s.Response <- authCode{Err: err}
-		// return
 	}(p)
 	<-s.Start
 	var cmd *exec.Cmd
@@ -224,8 +238,8 @@ func (a *AuthContainer) getCode() (string, error) {
 	return result.Code, nil
 }
 
-// getNewAccesstoken : Retrieve accesstoken when there is no refreshtoken.
-func (a *AuthContainer) getNewAccesstoken() *AuthContainer {
+// getNewAccesstoken : Retrieve accesstoken when there is no refreshtoken. 
+func (a *AuthContainer) getNewAccesstoken() error {
 	var code string
 	var err error
 	fmt.Printf("\n### Since %s is not found, the authorization process is launched.", cfgFile)
@@ -243,7 +257,7 @@ func (a *AuthContainer) getNewAccesstoken() *AuthContainer {
 			"[URL]==> %v\n"+
 			"[CODE]==>", codeurl)
 		if _, err := fmt.Scan(&code); err != nil {
-			log.Fatalf("Error: %v.\n", err)
+			return fmt.Errorf("could not read code from stdin: %w", err)
 		}
 		a.Cs.Cid.Redirecturis = append(a.Cs.Cid.Redirecturis, a.Cs.Cid.Redirecturis[0])
 	}
@@ -252,7 +266,7 @@ func (a *AuthContainer) getNewAccesstoken() *AuthContainer {
 	tokenparams.Set("client_secret", a.Cs.Cid.Clientsecret)
 	tokenparams.Set("redirect_uri", a.Cs.Cid.Redirecturis[len(a.Cs.Cid.Redirecturis)-1])
 	tokenparams.Set("code", code)
-	tokenparams.Set("grant_type", "authorization_code")
+	ttokenparams.Set("grant_type", "authorization_code")
 	r := &utl.RequestParams{
 		Method:      "POST",
 		APIURL:      oauthurl + "token",
@@ -263,16 +277,19 @@ func (a *AuthContainer) getNewAccesstoken() *AuthContainer {
 	}
 	body, err := r.FetchAPI()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: [ %v ] - Code is wrong. ", err)
-		os.Exit(1)
+		return fmt.Errorf("code is wrong: %w", err)
 	}
 	json.Unmarshal(body, &a.Atoken)
 	a.GgsrunCfg.Clientid = a.Cs.Cid.ClientID
 	a.GgsrunCfg.Clientsecret = a.Cs.Cid.Clientsecret
 	a.GgsrunCfg.Refreshtoken = a.Atoken.Refreshtoken
 	a.GgsrunCfg.Accesstoken = a.Atoken.Accesstoken
-	a.GgsrunCfg.Expiresin = a.chkAtoken() - 360 // 6 minutes as adjustment time
-	return a
+	exp, err := a.chkAtoken()
+	if err != nil {
+		return err
+	}
+	a.GgsrunCfg.Expiresin = exp - 360 // 6 minutes as adjustment time
+	return nil
 }
 
 // getAtFromSa : Retrieve access token from Service Account
