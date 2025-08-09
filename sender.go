@@ -143,7 +143,7 @@ func (e *e1para) MarshalJSON() ([]byte, error) {
 	if len(e.Parameters) > 0 {
 		if regexp.MustCompile(`^[+-]?[0-9]*[.]?[0-9]+$`).Match([]byte(e.Parameters[0].(string))) ||
 			regexp.MustCompile(`^[[]]$`).Match([]byte(e.Parameters[0].(string))) ||
-			regexp.MustCompile("^{|}").Match([]byte(e.Parameters[0].(string))) {
+			regexp.MustCompile("^{|} ").Match([]byte(e.Parameters[0].(string))) {
 			outd = fmt.Sprintf("{\"devMode\":%t, \"parameters\":%v, \"function\":%q}", e.DevMode, e.Parameters, e.Function)
 		} else if regexp.MustCompile("([a-zA-Z]|[0-9].*[a-zA-Z]|[a-zA-Z].*[0-9])").Match([]byte(e.Parameters[0].(string))) {
 			outd = fmt.Sprintf("{\"devMode\":%t, \"parameters\":%q, \"function\":%q}", e.DevMode, e.Parameters, e.Function)
@@ -406,7 +406,7 @@ func (e *ExecutionContainer) byteSliceConverter() error {
 		e.FeedBackData.Response.Result.Result = "### Byte Slice of File ###"
 		e.Msg = append(e.Msg, fmt.Sprintf("File was downloaded as '%s'. MimeType is '%s'.", f.Name, f.MimeType))
 	} else {
-		e.FeedBackData.Response.Result.Result = "Server isn\'t installed or Wrong File ID."
+		e.FeedBackData.Response.Result.Result = "Server isn't installed or Wrong File ID."
 	}
 	return nil
 }

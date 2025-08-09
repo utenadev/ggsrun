@@ -29,11 +29,15 @@ func exeAPIWithout(c *cli.Context) error {
 		return err
 	}
 
-	e, err := newExecutionContainer(initVal, resMsg, ggsrunCfg, param)
-	if err != nil {
+	if err := doExe1Function(c, initVal, resMsg, ggsrunCfg, param); err != nil {
 		return err
 	}
-	if err := e.exe1Function(c); err != nil {
+
+	// TODO: Refactor remaining chain to use DI
+	// The following lines still rely on ExecutionContainer methods
+	// which need to be refactored into standalone functions.
+	e, err := newExecutionContainer(initVal, resMsg, ggsrunCfg, param)
+	if err != nil {
 		return err
 	}
 	e.executionAPIwithoutServer(c)
