@@ -19,9 +19,16 @@ func exeAPIWithout(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	if err := a.ggsrunIni(c); err != nil {
+
+	// Call the new standalone initializer
+	ggsrunCfg, param, cs, err := doGgsrunIni(c, a.InitVal)
+	if err != nil {
 		return err
 	}
+	a.GgsrunCfg = ggsrunCfg
+	a.Param = param
+	a.Cs = cs
+
 	if err := a.goauth(); err != nil {
 		return err
 	}

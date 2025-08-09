@@ -11,62 +11,63 @@ import (
 	"github.com/urfave/cli"
 )
 
-// GgsrunIni : Initialize ggsrun
-func (a *AuthContainer) ggsrunIni(c *cli.Context) error {
-	if cfgdata, err := a.chkInitFile(cfgFile); err == nil {
-		err = json.Unmarshal(cfgdata, &a.GgsrunCfg)
-		if err != nil {
-			return fmt.Errorf("format error of '%s'", cfgFile)
+// doGgsrunIni handles the initialization by reading config files.
+// It's a standalone function that returns the loaded configurations or an error.
+func doGgsrunIni(c *cli.Context, initVal *InitVal) (*GgsrunCfg, *Param, *Cs, error) {
+	ggsrunCfg := &GgsrunCfg{}
+	param := &Param{}
+	cs := &Cs{}
+
+	// Try to read ggsrun.cfg
+	cfgdata, usedDir, err := chkInitFile(cfgFile, initVal.workdir, initVal.cfgdir)
+	initVal.usedDir = usedDir
+	if err == nil {
+		// If ggsrun.cfg is found, unmarshal it.
+		if err := json.Unmarshal(cfgdata, ggsrunCfg); err != nil {
+			return nil, nil, nil, fmt.Errorf("format error of '%s'", cfgFile)
 		}
-		if c.Command.Names()[0] == "exe1" ||
-			c.Command.Names()[0] == "exe2" {
-			if len(c.String("scriptid")) == 0 && len(a.GgsrunCfg.Scriptid) == 0 {
-				return fmt.Errorf("no script id. Please use option '-i [Script ID]'")
+		// Populate params from command-line flags
+		if c.Command.Names()[0] == "exe1" || c.Command.Names()[0] == "exe2" {
+			if len(c.String("scriptid")) == 0 && len(ggsrunCfg.Scriptid) == 0 {
+				return nil, nil, nil, fmt.Errorf("no script id. Please use option '-i [Script ID]'")
 			}
 			if len(c.String("scriptid")) > 0 {
-				a.GgsrunCfg.Scriptid = c.String("scriptid")
-				a.InitVal.update = true
+				ggsrunCfg.Scriptid = c.String("scriptid")
+				initVal.update = true
 			}
 			if len(c.String("function")) > 0 {
-				a.Param.Function = c.String("function")
+				param.Function = c.String("function")
 			}
 		}
 	} else {
-		return a.readClientSecret()
+		// If ggsrun.cfg is not found, read client_secret.json
+		csecret, usedDir, err := chkInitFile(clientsecretFile, initVal.workdir, initVal.cfgdir)
+		initVal.usedDir = usedDir
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("no materials for retrieving accesstoken. Please download '%s'", clientsecretFile)
+		}
+		if err := json.Unmarshal(csecret, cs); err != nil || (len(cs.Cid.ClientID) == 0 && len(cs.Ciw.ClientID) == 0) {
+			return nil, nil, nil, fmt.Errorf("please confirm '%s'. Error is %s", clientsecretFile, err)
+		}
+		if len(cs.Cid.ClientID) == 0 && len(cs.Ciw.ClientID) > 0 {
+			cs.Cid = cs.Ciw
+		}
 	}
-	return nil
+	return ggsrunCfg, param, cs, nil
 }
 
-// readClientSecret : Read client secret file
-func (a *AuthContainer) readClientSecret() error {
-	if csecret, err := a.chkInitFile(clientsecretFile); err == nil {
-		err := json.Unmarshal(csecret, &a.Cs)
-		if err != nil || (len(a.Cs.Cid.ClientID) == 0 && len(a.Cs.Ciw.ClientID) == 0) {
-			return fmt.Errorf("please confirm '%s'. Error is %s", clientsecretFile, err)
-		}
-		if len(a.Cs.Cid.ClientID) == 0 && len(a.Cs.Ciw.ClientID) > 0 {
-			a.Cs.Cid = a.Cs.Ciw
-		}
-	} else {
-		return fmt.Errorf("no materials for retrieving accesstoken. Please download '%s'", clientsecretFile)
+// chkInitFile checks for a file in the working directory first, then the config directory.
+// It returns the file content, the directory where the file was found, and an error.
+func chkInitFile(file, workdir, cfgdir string) ([]byte, string, error) {
+	// Check working directory
+	if body, err := ioutil.ReadFile(filepath.Join(workdir, file)); err == nil {
+		return body, "work", nil
 	}
-	return nil
-}
-
-// chkInitFile : Check initial files.
-// By this method, at first, files are searched in working directory, and next, they are searched in the directory declared by the environment variable.
-func (a *AuthContainer) chkInitFile(file string) ([]byte, error) {
-	var err error
-	var body []byte
-	if body, err = ioutil.ReadFile(filepath.Join(a.InitVal.workdir, file)); err == nil {
-		a.InitVal.usedDir = "work"
-		return body, err
-	}
-	if a.InitVal.workdir != a.InitVal.cfgdir {
-		if body, err = ioutil.ReadFile(filepath.Join(a.InitVal.cfgdir, file)); err == nil {
-			a.InitVal.usedDir = "env"
-			return body, err
+	// Check config directory if it's different
+	if workdir != cfgdir {
+		if body, err := ioutil.ReadFile(filepath.Join(cfgdir, file)); err == nil {
+			return body, "env", nil
 		}
 	}
-	return nil, fmt.Errorf("error: %s was not found", file)
+	return nil, "", fmt.Errorf("error: %s was not found", file)
 }
