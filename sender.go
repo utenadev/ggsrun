@@ -81,13 +81,15 @@ func (e *ExecutionContainer) exe2Function(c *cli.Context) error {
 	return e.esenderForExe2(c)
 }
 
-// ExecutionAPIwithoutServer : 
-func (e *ExecutionContainer) executionAPIwithoutServer(c *cli.Context) {
-	if len(e.Param.Function) == 0 {
-		e.Param.Function = deffuncwithout
-		e.Msg = append(e.Msg, fmt.Sprintf("Executed default function '%s()'.", deffuncwithout))
+// doExecutionAPIwithoutServer prepares parameters for an 'exe1' command execution.
+// It sets the default function name if not provided and enables development mode.
+func doExecutionAPIwithoutServer(param *Param, msg []string) []string {
+	if len(param.Function) == 0 {
+		param.Function = deffuncwithout
+		msg = append(msg, fmt.Sprintf("Executed default function '%s()'.", deffuncwithout))
 	}
-	e.Param.DevMode = true
+	param.DevMode = true
+	return msg
 }
 
 // executionAPIwithServer : 
@@ -109,33 +111,36 @@ func (e *ExecutionContainer) executionAPIwithServer(sendscript string) error {
 	return nil
 }
 
-// executionError : Check error for execution API
-func (e *ExecutionContainer) executionError(body []byte, err error) error {
+// doExecutionError checks for and handles errors from the Apps Script Execution API.
+func doExecutionError(body []byte, err error, accessToken string) error {
 	if err == nil {
 		return nil
 	}
-	json.Unmarshal(body, &e.FeedBackData)
-	if e.FeedBackData.Error.Status == "UNAUTHENTICATED" {
-		chk, _ := e.chkAtokenForExecution()
+	feedBackData := &FeedBackData{}
+	json.Unmarshal(body, feedBackData)
+	if feedBackData.Error.Status == "UNAUTHENTICATED" {
+		chk, _ := doChkAtokenForExecution(accessToken)
 		if chk != nil && len(chk.Error) > 0 {
-			return fmt.Errorf("invalid Access token. Please retrieve it again using command '%s auth'.\nCurrent access token is '%s'", appname, e.GgsrunCfg.Accesstoken)
+			return fmt.Errorf("invalid Access token. Please retrieve it again using command '%s auth'.\nCurrent access token is '%s'", appname, accessToken)
 		}
 		return fmt.Errorf("authorization Error: Please check SCOPEs of your GAS script and server using GAS Script Editor.\nIf the SCOPEs have changed, modify them in '%s' and delete a line of 'refresh_token', then, execute '%s' again. You can retrieve new access token with modified SCOPEs", cfgFile, appname)
 	}
-	if e.FeedBackData.Error.Message == "PERMISSION_DENIED" &&
-		e.FeedBackData.Error.Code == 403 {
+	if feedBackData.Error.Message == "PERMISSION_DENIED" &&
+		feedBackData.Error.Code == 403 {
 		return fmt.Errorf("please check Execution API at Developer console.\nIf Execution API is unable, please enable it. Or please check 'client_secret.json'. It might be that that is not for the project with Execution API")
 	}
-	if e.FeedBackData.Error.Message == "Requested entity was not found." &&
-		e.FeedBackData.Error.Code == 404 {
+	if feedBackData.Error.Message == "Requested entity was not found." &&
+		feedBackData.Error.Code == 404 {
 		return fmt.Errorf("please check the deployment of API executable and/or the ggsrun server.\n - If you use command 'e1', please deploy API executable again. If you use command 'e2', please check both again.\n - After deployed API executable, please save each scripts on the project again. This is very important point!\n - When you use the server as library, please confirm server.\n - Also you can use 'Logger.log(ggsrunif.Beacon())' at Google Apps Script Editor to confirm server condition.\n - Also, please check the script ID")
 	}
-	if len(e.FeedBackData.Error.Detailes) > 0 && e.FeedBackData.Error.Detailes[0].ErrorMessage == "The script completed but the returned value is not a supported return type." &&
-		e.FeedBackData.Error.Code == 500 {
-		return fmt.Errorf(e.FeedBackData.Error.Detailes[0].ErrorMessage)
+	if len(feedBackData.Error.Detailes) > 0 && feedBackData.Error.Detailes[0].ErrorMessage == "The script completed but the returned value is not a supported return type." &&
+		feedBackData.Error.Code == 500 {
+		return fmt.Errorf(feedBackData.Error.Detailes[0].ErrorMessage)
 	}
 	return fmt.Errorf("API Error: %w, Body: %s", err, body)
 }
+
+
 
 // MarshalJSON : For exe1
 func (e *e1para) MarshalJSON() ([]byte, error) {
@@ -154,62 +159,64 @@ func (e *e1para) MarshalJSON() ([]byte, error) {
 	return []byte(outd), nil
 }
 
-// EsenderForExe1 : Sends GAS to Google and retrieves results.
-func (e *ExecutionContainer) esenderForExe1(c *cli.Context) error {
+// doEsenderForExe1 sends the request to the Apps Script Execution API and processes the response.
+func doEsenderForExe1(c *cli.Context, param *Param, ggsrunCfg *GgsrunCfg, pstart time.Time, msg []string) (*FeedBackData, []string, error) {
 	var paraint []interface{}
 	if len(c.String("value")) > 0 {
 		paraint = []interface{}{c.String("value")}
 	}
 	epara := &e1para{
-		Function:   e.Param.Function,
+		Function:   param.Function,
 		Parameters: paraint,
-		DevMode:    e.Param.DevMode,
+		DevMode:    param.DevMode,
 	}
 	re, _ := json.Marshal(epara)
 	if len(re) == 0 {
-		return fmt.Errorf("format of values is wrong. Double and single quotates have to be escaped.\n - Inputted value was  %s", c.String("value"))
+		return nil, msg, fmt.Errorf("format of values is wrong. Double and single quotates have to be escaped.\n - Inputted value was  %s", c.String("value"))
 	}
 	r := &utl.RequestParams{
 		Method:      "POST",
-		APIURL:      executionurl + e.GgsrunCfg.Scriptid + ":run",
+		APIURL:      executionurl + ggsrunCfg.Scriptid + ":run",
 		Data:        bytes.NewBuffer(re),
 		Contenttype: "application/json;charset=UTF-8",
-		Accesstoken: e.GgsrunCfg.Accesstoken,
+		Accesstoken: ggsrunCfg.Accesstoken,
 		Dtime:       370,
 	}
 	body, err := r.FetchAPI()
-	if err := e.executionError(body, err); err != nil {
-		return err
+	if err := doExecutionError(body, err, ggsrunCfg.Accesstoken); err != nil {
+		return nil, msg, err
 	}
-	json.Unmarshal(body, &e.FeedBackData)
+	feedBackData := &FeedBackData{}
+	json.Unmarshal(body, feedBackData)
 	var dat string
-	if len(e.FeedBackData.Error.Message) > 0 {
-		if len(e.FeedBackData.Error.Detailes[0].ScriptStackTraceElements) > 0 {
-			dat = fmt.Sprintf("{code: %d, message: %s, function: %s, linenumber: %d}", e.FeedBackData.Error.Code, e.FeedBackData.Error.Message, e.FeedBackData.Error.Detailes[0].ScriptStackTraceElements[0].Function, e.FeedBackData.Error.Detailes[0].ScriptStackTraceElements[0].LineNumber)
+	if len(feedBackData.Error.Message) > 0 {
+		if len(feedBackData.Error.Detailes[0].ScriptStackTraceElements) > 0 {
+			dat = fmt.Sprintf("{code: %d, message: %s, function: %s, linenumber: %d}", feedBackData.Error.Code, feedBackData.Error.Message, feedBackData.Error.Detailes[0].ScriptStackTraceElements[0].Function, feedBackData.Error.Detailes[0].ScriptStackTraceElements[0].LineNumber)
 		} else {
-			dat = fmt.Sprintf("{code: %d, message: %s}", e.FeedBackData.Error.Code, e.FeedBackData.Error.Message)
+			dat = fmt.Sprintf("{code: %d, message: %s}", feedBackData.Error.Code, feedBackData.Error.Message)
 		}
-		e.Msg = append(e.Msg, dat)
+		msg = append(msg, dat)
 	} else {
 		var rs map[string]interface{}
 		json.Unmarshal(body, &rs)
 		result := rs["response"].(map[string]interface{})["result"]
 		if formattedError, isGasError := handleGasError(result); isGasError {
-			e.Msg = append(e.Msg, formattedError)
-			e.FeedBackData.Response.Result.Result = nil // Clear the result to avoid double printing
+			msg = append(msg, formattedError)
+			feedBackData.Response.Result.Result = nil // Clear the result to avoid double printing
 		} else {
-			e.FeedBackData.Response.Result.Result = result
+			feedBackData.Response.Result.Result = result
 		}
 	}
-	if len(e.FeedBackData.Error.Detailes) > 0 {
-		dat = fmt.Sprintf("{detailmessage: %s}", e.FeedBackData.Error.Detailes[0].ErrorMessage)
-		e.Msg = append(e.Msg, dat)
+	if len(feedBackData.Error.Detailes) > 0 {
+		dat = fmt.Sprintf("{detailmessage: %s}", feedBackData.Error.Detailes[0].ErrorMessage)
+		msg = append(msg, dat)
 	}
-	e.FeedBackData.Response.Result.TotalEt = math.Trunc(time.Since(e.InitVal.pstart).Seconds()*1000) / 1000
-	e.FeedBackData.Response.Result.Uapi = eapir1
-	e.Msg = append(e.Msg, fmt.Sprintf("Function '%s()' was run.", e.Param.Function))
-	return nil
+	feedBackData.Response.Result.TotalEt = math.Trunc(time.Since(pstart).Seconds()*1000) / 1000
+	feedBackData.Response.Result.Uapi = eapir1
+	msg = append(msg, fmt.Sprintf("Function '%s()' was run.", param.Function))
+	return feedBackData, msg, nil
 }
+
 
 // esenderForExe2 : Sends GAS to Google and retrieves results.
 func (e *ExecutionContainer) esenderForExe2(c *cli.Context) error {

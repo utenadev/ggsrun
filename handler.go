@@ -33,6 +33,8 @@ func exeAPIWithout(c *cli.Context) error {
 		return err
 	}
 
+	resMsg.Msg = doExecutionAPIwithoutServer(param, resMsg.Msg)
+
 	// TODO: Refactor remaining chain to use DI
 	// The following lines still rely on ExecutionContainer methods
 	// which need to be refactored into standalone functions.
@@ -40,11 +42,15 @@ func exeAPIWithout(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	e.executionAPIwithoutServer(c)
-	if err := e.esenderForExe1(c); err != nil {
+
+	feedBackData, msg, err := doEsenderForExe1(c, param, ggsrunCfg, initVal.pstart, resMsg.Msg)
+	if err != nil {
 		return err
 	}
-	e.dispResult(c)
+	resMsg.Msg = msg
+	e.FeedBackData = feedBackData
+
+	doDispResult(c, e.FeedBackData, resMsg.Msg)
 	return nil
 }
 
@@ -172,23 +178,23 @@ func interactiveSetup(c *cli.Context) error {
 	return RunInteractiveSetup(c)
 }
 
-// dispResult : Display result
-func (e *ExecutionContainer) dispResult(c *cli.Context) {
+// doDispResult formats and displays the final execution result to the user.
+func doDispResult(c *cli.Context, feedBackData *FeedBackData, msg []string) {
 	var dispRes []byte
-	if len(e.Msg) > 0 {
-		e.FeedBackData.Response.Result.Message = e.Msg
+	if len(msg) > 0 {
+		feedBackData.Response.Result.Message = msg
 	}
 	if c.Bool("jsonparser") {
-		dispRes, _ = json.MarshalIndent(e.FeedBackData.Response.Result, "", "  ")
+		dispRes, _ = json.MarshalIndent(feedBackData.Response.Result, "", "  ")
 	} else {
-		dispRes, _ = json.Marshal(e.FeedBackData.Response.Result)
+		dispRes, _ = json.Marshal(feedBackData.Response.Result)
 	}
 	if c.Bool("onlyresult") {
 		if c.Bool("jsonparser") {
-			onlyres, _ := json.MarshalIndent(e.FeedBackData.Response.Result.Result, "", "  ")
+			onlyres, _ := json.MarshalIndent(feedBackData.Response.Result.Result, "", "  ")
 			fmt.Printf("%s\n", string(onlyres))
 		} else {
-			onlyres, _ := json.Marshal(e.FeedBackData.Response.Result.Result)
+			onlyres, _ := json.Marshal(feedBackData.Response.Result.Result)
 			fmt.Printf("%s\n", string(onlyres))
 		}
 	} else {

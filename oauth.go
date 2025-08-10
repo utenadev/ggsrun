@@ -129,11 +129,11 @@ func chkAtoken(accessToken string) (int64, error) {
 	return strconv.ParseInt(chkAt.Exp, 10, 64)
 }
 
-// chkAtokenForExecution : For ExecutionContainer
-func (e *ExecutionContainer) chkAtokenForExecution() (*ChkAt, error) {
+// doChkAtokenForExecution checks the validity of an access token for the Execution API.
+func doChkAtokenForExecution(accessToken string) (*ChkAt, error) {
 	r := &utl.RequestParams{
 		Method:      "GET",
-		APIURL:      chkatutl + "tokeninfo?access_token=" + e.GgsrunCfg.Accesstoken,
+		APIURL:      chkatutl + "tokeninfo?access_token=" + accessToken,
 		Data:        nil,
 		Contenttype: "application/x-www-form-urlencoded",
 		Accesstoken: "",

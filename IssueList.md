@@ -65,12 +65,46 @@ Goの標準的なエラーハンドリングパターンにリファクタリン
 ### 提案する解決策
 依存性の注入（Dependency Injection）の設計思想に基づき、リファクタリングを行う。各関数は巨大な構造体に依存するのではなく、必要なデータだけを引数として受け取るようにする。
 
-**対応状況:** `ggsrunIni` 関数を `AuthContainer` から分離し、独立した関数 `doGgsrunIni` としてリファクタリングする最初のステップを完了。
+**対応状況:** `ggsrunIni` 関数を `AuthContainer` から分離し、独立した関数 `doGgsrunIni` としてリファクタリングする最初のステップを完了。`AuthContainer` と `ExecutionContainer` のコンストラクタを独立させ、`exe1Function` とそのヘルパー関数を独立させた。
 
 ### 具体的なタスクリスト
 - [x] まずは1つの関数（例: `ggsrunIni`）を対象に、リファクタリングのプルーフ・オブ・コンセプトを実装する。
     - [x] `ggsrunIni` の関数シグネチャを、コンテナ構造体ではなく、必要な値を引数で受け取るように変更する。
     - [x] `ggsrunIni` が生成した値を戻り値で返すように変更する。
     - [x] `handler.go` の呼び出し箇所を修正し、新しいシグネチャに対応させる。
-- [ ] 他の関数についても、同様のリファクタリングを段階的に進める。
+- [x] 他の関数についても、同様のリファクタリングを段階的に進める。
+    - [x] `defAuthContainer` を `newAuthContainer` にリファクタリングし、独立した関数にする。
+    - [x] `defExecutionContainer` を `newExecutionContainer` にリファクタリングし、独立した関数にする。
+    - [x] `exe1Function` を `doExe1Function` にリファクタリングし、独立した関数にする。
+    - [x] `projectBackup` を `doProjectBackup` にリファクタリングし、独立した関数にする。
+    - [x] `projectUpdateIni` を `doProjectUpdateIni` にリファクタリングし、独立した関数にする。
+    - [x] `projectUpdate2` を `doProjectUpdate2` にリファクタリングし、独立した関数にする。
+
+**残りのリファクタリングタスク:**
+- [x] `exeAPIWithout` コマンドフローの残りの関数をリファクタリングする。
+    - [x] `executionAPIwithoutServer` を独立した関数 `doExecutionAPIwithoutServer` にする。
+    - [x] `esenderForExe1` を独立した関数 `doEsenderForExe1` にする。
+    - [x] `dispResult` を独立した関数 `doDispResult` にする。
+    - [x] `executionError` を独立した関数 `doExecutionError` にする。
+    - [x] `chkAtokenForExecution` を独立した関数 `doChkAtokenForExecution` にする。
+- [ ] `exeAPIWithout` 以外のコマンドフローをリファクタリングする。
+    - [ ] `defExecutionContainerWebApps` を独立した関数にする。
+    - [ ] `defDownloadContainer` を独立した関数にする。
+    - [ ] `defUploadContainer` を独立した関数にする。
+    - [ ] `defPermissionsContainer` を独立した関数にする。
+    - [ ] `dispUpdateProjectContainer` を独立した関数にする。
+    - [ ] `defDownloadByScriptContainer` を独立した関数にする。
+    - [ ] `defUpdateProjectContainer` を独立した関数にする。
+    - [ ] `convExecutionContainerToFileInf` を独立した関数にする。
+    - [ ] `exe2Function` を独立した関数にする。
+    - [ ] `webAppsWith` (ハンドラ) をリファクタリングする。
+    - [ ] `downloadFiles` (ハンドラ) をリファクタリングする。
+    - [ ] `uploadFiles` (ハンドラ) をリファクタリングする。
+    - [ ] `updateProject` (ハンドラ) をリファクタリングする。
+    - [ ] `revisionFiles` (ハンドラ) をリファクタリングする。
+    - [ ] `showFileList` (ハンドラ) をリファクタリングする。
+    - [ ] `searchFilesByQueryAndRegex` (ハンドラ) をリファクタリングする。
+    - [ ] `managePermissions` (ハンドラ) をリファクタリングする。
+    - [ ] `getDriveInformation` (ハンドラ) をリファクタリングする。
+    - [ ] `reAuth` (ハンドラ) をリファクタリングする。
 - [ ] 長期的なゴールとして、全ての関数がリファクタリングされた後、不要になったコンテナ構造体を削除する。
