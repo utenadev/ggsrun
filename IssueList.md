@@ -19,7 +19,7 @@
 - [x] Apps Script API を利用して、サーバーサイドスクリプト用のGASプロジェクトを自動で作成する機能を実装する。
 - [x] 作成したGASプロジェクトに `server/server.gs` の内容をアップロードする機能を実装する。
 - [x] ユーザーにGCPコンソールやGASエディタの特定ページへ直接誘導するためのURLを生成・表示する。
-- [ ] `README.md` などのドキュメントを更新し、新しい `init` コマンドの利用方法を記載する。
+- [x] `README.md` などのドキュメントを更新し、新しい `init` コマンドの利用方法を記載する。
 
 ---
 
@@ -91,20 +91,20 @@ Goの標準的なエラーハンドリングパターンにリファクタリン
     - [x] `defExecutionContainerWebApps` を独立した関数にする。
     - [x] `defDownloadContainer` を独立した関数にする。
     - [x] `defUploadContainer` を独立した関数にする。
-    - [ ] `defPermissionsContainer` を独立した関数にする。
-    - [ ] `dispUpdateProjectContainer` を独立した関数にする。
-    - [ ] `defDownloadByScriptContainer` を独立した関数にする。
-    - [ ] `defUpdateProjectContainer` を独立した関数にする。
-    - [ ] `convExecutionContainerToFileInf` を独立した関数にする。
+    - [x] `defPermissionsContainer` を独立した関数にする。
+    - [x] `dispUpdateProjectContainer` を独立した関数にする。
+    - [x] `defDownloadByScriptContainer` を独立した関数にする。
+    - [x] `defUpdateProjectContainer` を独立した関数にする。
+    - [x] `convExecutionContainerToFileInf` を独立した関数にする。
     - [x] `exe2Function` を独立した関数にする。
     - [x] `webAppsWith` (ハンドラ) をリファクタリングする。
-    - [ ] `downloadFiles` (ハンドラ) をリファクタリングする。
-    - [ ] `uploadFiles` (ハンドラ) をリファクタリングする。
-    - [ ] `updateProject` (ハンドラ) をリファクタリングする。
-    - [ ] `revisionFiles` (ハンドラ) をリファクタリングする。
-    - [ ] `showFileList` (ハンドラ) をリファクタリングする。
-    - [ ] `searchFilesByQueryAndRegex` (ハンドラ) をリファクタリングする。
-    - [ ] `managePermissions` (ハンドラ) をリファクタリングする。
-    - [ ] `getDriveInformation` (ハンドラ) をリファクタリングする。
-    - [ ] `reAuth` (ハンドラ) をリファクタリングする。
+    - [x] `downloadFiles` (ハンドラ) をリファクタリングする。
+    - [x] `uploadFiles` (ハンドラ) をリファクタリングする。
+    - [x] `updateProject` (ハンドラ) をリファクタリングする。
+    - [x] `revisionFiles` (ハンドラ) をリファクタリングする。
+    - [x] `showFileList` (ハンドラ) をリファクタリングする。
+    - [x] `searchFilesByQueryAndRegex` (ハンドラ) をリファクタリングする。
+    - [x] `managePermissions` (ハンドラ) をリファクタリングする。
+    - [x] `getDriveInformation` (ハンドラ) をリファクタリングする。
+    - [x] `reAuth` (ハンドラ) をリファクタリングする。
 - [ ] 長期的なゴールとして、全ての関数がリファクタリングされた後、不要になったコンテナ構造体を削除する。

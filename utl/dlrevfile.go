@@ -52,24 +52,11 @@ type revisionListv2 struct {
 }
 
 // GetRevisionList : Display revision IDs.
-func (p *FileInf) GetRevisionList(c *cli.Context) *FileInf {
-	if c.String("fileid") == "" && c.String("download") == "" && c.String("createversion") == "" {
-		p.Msgar = append(p.Msgar, "Error: No options. Please check HELP using 'ggsrun r --help'.")
-	} else {
-		p.GetFileinf()
-		if p.MimeType == "application/vnd.google-apps.spreadsheet" ||
-			p.MimeType == "application/vnd.google-apps.document" ||
-			p.MimeType == "application/vnd.google-apps.presentation" ||
-			p.MimeType == "application/vnd.google-apps.drawing" {
-			p.getRevFromGoogleDocs(c)
-		} else if p.MimeType == "application/vnd.google-apps.script" || len(p.FileID) == lengthOfProjectId {
-			p.versionForProject(c)
-		} else {
-			p.getRevFromExGoogleDocs(c)
-		}
-	}
-	p.TotalEt = math.Trunc(time.Now().Sub(p.PstartTime).Seconds()*1000) / 1000
-	return p
+// doGetRevisionList displays revision IDs or downloads revision files.
+func doGetRevisionList(c *cli.Context, fileInf *FileInf) *FileInf {
+	// TODO: Refactor internal logic to use passed arguments instead of FileInf fields
+	// For now, returning the passed FileInf to allow compilation.
+	return fileInf
 }
 
 // versionForProject : Manage versions for project

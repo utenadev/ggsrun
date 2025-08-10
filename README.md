@@ -73,6 +73,25 @@ After the GAS project was linked to Cloud Platform Project by above flow, please
 - [Ref1: Default Cloud Platform projects](https://developers.google.com/apps-script/guides/cloud-platform-projects#default_cloud_platform_projects)
 - [Ref2: Linking Cloud Platform Project to Google Apps Script Project](https://gist.github.com/tanaikech/e945c10917fac34a9d5d58cad768832c)
 
+<a name="initialsetup"></a>
+
+## 1. Initial Setup with `ggsrun init`
+
+The `ggsrun init` command simplifies the initial setup process by guiding you through the necessary steps to configure `ggsrun` and prepare your Google Apps Script environment. This command automates several tasks, including:
+
+-   **Client Secret Configuration:** Helps you input and save your `client_secret.json` details.
+-   **Google Apps Script Project Creation:** Automatically creates a new Google Apps Script project for your server-side scripts.
+-   **Server Script Upload:** Uploads the `server/server.gs` content to your newly created Apps Script project.
+-   **API Enablement Guidance:** Provides direct links to enable necessary Google APIs (Apps Script API and Drive API) in your Google Cloud Project.
+
+To begin the initial setup, run the following command in your terminal:
+
+```bash
+$ ggsrun init
+```
+
+Follow the on-screen prompts to complete the setup.
+
 ## 2. Basic setting flow
 
 When you click each link of title, you can see the detail information.

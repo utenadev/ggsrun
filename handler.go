@@ -151,75 +151,149 @@ func uploadFiles(c *cli.Context) error {
 
 // updateProject : Updates projects and scripts
 func updateProject(c *cli.Context) error {
-	res := defAuthContainer(c).
-		ggsrunIni(c).
-		goauth().
-		defExecutionContainer().
-		projectUpdateControl(c)
+	initVal, resMsg, ggsrunCfg, _, cs, _, _, err := newAuthContainer(c)
+	if err != nil {
+		return err
+	}
+
+	ggsrunCfg, _, cs, err = doGgsrunIni(c, initVal)
+	if err != nil {
+		return err
+	}
+
+	if err := doGoauth(initVal, ggsrunCfg, cs, resMsg); err != nil {
+		return err
+	}
+
+	res := doProjectUpdateControl(c, ggsrunCfg, newUpdateProjectContainer(c), resMsg.Msg, initVal.pstart)
 	dispTransferResult(c, res)
 	return nil
 }
 
 // revisionFiles : Retrieves revision IDs and downloads revision files.
 func revisionFiles(c *cli.Context) error {
-	res := defAuthContainer(c).
-		ggsrunIni(c).
-		goauth().
-		defDownloadContainer(c).
-		GetRevisionList(c)
+	initVal, resMsg, ggsrunCfg, _, cs, _, _, err := newAuthContainer(c)
+	if err != nil {
+		return err
+	}
+
+	ggsrunCfg, _, cs, err = doGgsrunIni(c, initVal)
+	if err != nil {
+		return err
+	}
+
+	if err := doGoauth(initVal, ggsrunCfg, cs, resMsg); err != nil {
+		return err
+	}
+
+	fileInf := newDownloadContainer(c, resMsg.Msg, ggsrunCfg.Accesstoken, initVal.workdir, initVal.useServiceAccount, initVal.pstart)
+	res := doGetRevisionList(c, fileInf)
 	dispTransferResult(c, res)
 	return nil
 }
 
 // showFileList : Shows file list on Google Drive
 func showFileList(c *cli.Context) error {
-	res := defAuthContainer(c).
-		ggsrunIni(c).
-		goauth().
-		defDownloadContainer(c).
-		GetFileList(c)
+	initVal, resMsg, ggsrunCfg, _, cs, _, _, err := newAuthContainer(c)
+	if err != nil {
+		return err
+	}
+
+	ggsrunCfg, _, cs, err = doGgsrunIni(c, initVal)
+	if err != nil {
+		return err
+	}
+
+	if err := doGoauth(initVal, ggsrunCfg, cs, resMsg); err != nil {
+		return err
+	}
+
+	fileInf := newDownloadContainer(c, resMsg.Msg, ggsrunCfg.Accesstoken, initVal.workdir, initVal.useServiceAccount, initVal.pstart)
+	res := doGetFileList(c, fileInf)
 	dispTransferResult(c, res)
 	return nil
 }
 
 // searchFilesByQueryAndRegex : Search files on Google Drive using search query and regex.
 func searchFilesByQueryAndRegex(c *cli.Context) error {
-	res := defAuthContainer(c).
-		ggsrunIni(c).
-		goauth().
-		defDownloadContainer(c).
-		SearchFiles()
+	initVal, resMsg, ggsrunCfg, _, cs, _, _, err := newAuthContainer(c)
+	if err != nil {
+		return err
+	}
+
+	ggsrunCfg, _, cs, err = doGgsrunIni(c, initVal)
+	if err != nil {
+		return err
+	}
+
+	if err := doGoauth(initVal, ggsrunCfg, cs, resMsg); err != nil {
+		return err
+	}
+
+	fileInf := newDownloadContainer(c, resMsg.Msg, ggsrunCfg.Accesstoken, initVal.workdir, initVal.useServiceAccount, initVal.pstart)
+	res := doSearchFiles(fileInf)
 	dispTransferResult(c, res)
 	return nil
 }
 
 // managePermissions : Manage permissions.
 func managePermissions(c *cli.Context) error {
-	res := defAuthContainer(c).
-		ggsrunIni(c).
-		goauth().
-		defPermissionsContainer(c).
-		ManagePermissions()
+	initVal, resMsg, ggsrunCfg, _, cs, _, _, err := newAuthContainer(c)
+	if err != nil {
+		return err
+	}
+
+	ggsrunCfg, _, cs, err = doGgsrunIni(c, initVal)
+	if err != nil {
+		return err
+	}
+
+	if err := doGoauth(initVal, ggsrunCfg, cs, resMsg); err != nil {
+		return err
+	}
+
+	fileInf := newPermissionsContainer(c, resMsg.Msg, ggsrunCfg.Accesstoken, initVal.workdir, initVal.useServiceAccount, initVal.pstart)
+	res := doManagePermissions(fileInf)
 	dispTransferResult(c, res)
 	return nil
 }
 
 // getDriveInformation : Get drive information.
 func getDriveInformation(c *cli.Context) error {
-	res := defAuthContainer(c).
-		ggsrunIni(c).
-		goauth().
-		defDownloadContainer(c).
-		GetDriveInformation()
+	initVal, resMsg, ggsrunCfg, _, cs, _, _, err := newAuthContainer(c)
+	if err != nil {
+		return err
+	}
+
+	ggsrunCfg, _, cs, err = doGgsrunIni(c, initVal)
+	if err != nil {
+		return err
+	}
+
+	if err := doGoauth(initVal, ggsrunCfg, cs, resMsg); err != nil {
+		return err
+	}
+
+	fileInf := newDownloadContainer(c, resMsg.Msg, ggsrunCfg.Accesstoken, initVal.workdir, initVal.useServiceAccount, initVal.pstart)
+	res := doGetDriveInformation(fileInf)
 	dispTransferResult(c, res)
 	return nil
 }
 
 // reAuth : Retrieve tokens again.
 func reAuth(c *cli.Context) error {
-	defAuthContainer(c).
-		ggsrunIni(c).
-		reAuth()
+	initVal, ggsrunCfg, cs, err := newAuthContainerForReAuth(c)
+	if err != nil {
+		return err
+	}
+
+	if err := doGgsrunIni(c, initVal); err != nil {
+		return err
+	}
+
+	if err := doReAuth(initVal, ggsrunCfg, cs); err != nil {
+		return err
+	}
 	fmt.Print("Done.")
 	return nil
 }

@@ -434,11 +434,11 @@ func newUploadContainer(c *cli.Context, msg []string, accessToken, workdir, useS
 }
 
 // dispUpdateProjectContainer : Struct container for downloading files by GAS
-func (e *ExecutionContainer) dispUpdateProjectContainer() *utl.FileInf {
+// doDispUpdateProjectContainer displays the result of a project update operation.
+func doDispUpdateProjectContainer(msg []string, pstartTime time.Time) *utl.FileInf {
 	p := &utl.FileInf{
-		Msgar:   e.Msg,
-		TotalEt: math.Trunc(time.Since(e.InitVal.pstart).Seconds()*1000) / 1000,
-		// TotalEt: math.Trunc(time.Now().Sub(e.InitVal.pstart).Seconds()*1000) / 1000,
+		Msgar:   msg,
+		TotalEt: math.Trunc(time.Since(pstartTime).Seconds()*1000) / 1000,
 	}
 	return p
 }
@@ -462,9 +462,10 @@ func newUpdateProjectContainer(c *cli.Context) []string {
 }
 
 // convExecutionContainerToFileInf : Convert ExecutionContainer to FileInf
-func (e *ExecutionContainer) convExecutionContainerToFileInf() *utl.FileInf {
+// doConvExecutionContainerToFileInf converts an ExecutionContainer to a FileInf struct.
+func doConvExecutionContainerToFileInf(accessToken string) *utl.FileInf {
 	p := &utl.FileInf{
-		Accesstoken: e.Accesstoken,
+		Accesstoken: accessToken,
 	}
 	return p
 }
@@ -483,8 +484,8 @@ func (e *ExecutionContainer) convExecutionContainerToFileInf() *utl.FileInf {
 // }
 
 // defPermissionsContainer : Struct container for managing permissions
-func (a *AuthContainer) defPermissionsContainer(c *cli.Context) *utl.FileInf {
-	p := a.defDownloadContainer(c)
+func newPermissionsContainer(c *cli.Context, msg []string, accessToken, workdir, useServiceAccount string, pstartTime time.Time) *utl.FileInf {
+	p := newDownloadContainer(c, msg, accessToken, workdir, useServiceAccount, pstartTime)
 	p.PermissionInfo.FileID = c.String("fileid")
 	p.PermissionInfo.PermissionID = c.String("permissionid")
 	p.PermissionInfo.Role = c.String("role")
@@ -493,8 +494,5 @@ func (a *AuthContainer) defPermissionsContainer(c *cli.Context) *utl.FileInf {
 	p.PermissionInfo.Transferownership = c.Bool("transferownership")
 	p.PermissionInfo.CreateObject = c.String("createbyobject")
 	p.PermissionInfo.DeleteObject = c.String("deletebyobject")
-	p.PermissionInfo.UpdateObject = c.String("updatebyobject")
-	p.PermissionInfo.Create = c.Bool("create")
-	p.PermissionInfo.Delete = c.Bool("delete")
 	return p
 }
