@@ -57,12 +57,34 @@ func exeAPIWithout(c *cli.Context) error {
 // exeAPIWith : exe2
 // No update project. Only execute GAS using Execution API with server script.
 func exeAPIWith(c *cli.Context) error {
-	defAuthContainer(c).
-		ggsrunIni(c).
-		goauth().
-		defExecutionContainer().
-		exe2Function(c).
-		dispResult(c)
+	initVal, resMsg, ggsrunCfg, param, cs, _, _, err := newAuthContainer(c)
+	if err != nil {
+		return err
+	}
+
+	ggsrunCfg, param, cs, err = doGgsrunIni(c, initVal)
+	if err != nil {
+		return err
+	}
+
+	if err := doGoauth(initVal, ggsrunCfg, cs); err != nil {
+		return err
+	}
+
+	e, err := newExecutionContainer(initVal, resMsg, ggsrunCfg, param)
+	if err != nil {
+		return err
+	}
+
+	feedBackData, msg, dlFileByScript, err := doExe2Function(c, e.Param, e.GgsrunCfg, e.InitVal, e.Msg, e.DlFileByScript)
+	if err != nil {
+		return err
+	}
+	e.FeedBackData = feedBackData
+	e.Msg = msg
+	e.DlFileByScript = dlFileByScript
+
+	doDispResult(c, e.FeedBackData, resMsg.Msg)
 	return nil
 }
 

@@ -443,15 +443,15 @@ func (e *ExecutionContainer) dispUpdateProjectContainer() *utl.FileInf {
 	return p
 }
 
-// defDownloadByScriptContainer : Struct container for downloading files by GAS
-func (e *ExecutionContainer) defDownloadByScriptContainer() *utl.FileInf {
+// newDownloadByScriptContainer creates a FileInf struct for downloading a file requested by a script.
+func newDownloadByScriptContainer(msg []string, accessToken, workdir string, pstartTime time.Time, dlFileByScript *DlFileByScript) *utl.FileInf {
 	p := &utl.FileInf{
-		Msgar:       e.Msg,
-		Accesstoken: e.GgsrunCfg.Accesstoken,
-		Workdir:     e.InitVal.workdir,
-		PstartTime:  e.InitVal.pstart,
-		FileID:      e.DlFileByScript.Fileid,
-		WantExt:     e.DlFileByScript.Extension,
+		Msgar:       msg,
+		Accesstoken: accessToken,
+		Workdir:     workdir,
+		PstartTime:  pstartTime,
+		FileID:      dlFileByScript.Fileid,
+		WantExt:     dlFileByScript.Extension,
 	}
 	return p
 }

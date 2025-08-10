@@ -96,7 +96,7 @@ Goの標準的なエラーハンドリングパターンにリファクタリン
     - [ ] `defDownloadByScriptContainer` を独立した関数にする。
     - [ ] `defUpdateProjectContainer` を独立した関数にする。
     - [ ] `convExecutionContainerToFileInf` を独立した関数にする。
-    - [ ] `exe2Function` を独立した関数にする。
+    - [x] `exe2Function` を独立した関数にする。
     - [ ] `webAppsWith` (ハンドラ) をリファクタリングする。
     - [ ] `downloadFiles` (ハンドラ) をリファクタリングする。
     - [ ] `uploadFiles` (ハンドラ) をリファクタリングする。
