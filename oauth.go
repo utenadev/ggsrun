@@ -23,15 +23,14 @@ import (
 )
 
 // doGoauth manages the OAuth2 flow.
-func doGoauth(initVal *InitVal, ggsrunCfg *GgsrunCfg, cs *Cs) error {
+func doGoauth(initVal *InitVal, ggsrunCfg *GgsrunCfg, cs *Cs, resMsg *ResMsg) error {
 	if initVal.useServiceAccount != "" {
 		accessToken, err := getAtFromSa(initVal.useServiceAccount, ggsrunCfg.Scopes)
 		if err != nil {
 			return fmt.Errorf("could not get access token from service account: %w", err)
 		}
 		ggsrunCfg.Accesstoken = accessToken
-		// TODO: Add a message to a proper message container
-		// a.Msg = append(a.Msg, "Service Account was used.")
+		resMsg.Msg = append(resMsg.Msg, "Service Account was used.")
 		return nil
 	}
 
@@ -40,18 +39,29 @@ func doGoauth(initVal *InitVal, ggsrunCfg *GgsrunCfg, cs *Cs) error {
 			if err := getAtoken(ggsrunCfg); err != nil {
 				return err
 			}
-			return makecfgfile(ggsrunCfg, initVal)
+			if err := makecfgfile(ggsrunCfg, initVal); err != nil {
+				return err
+			}
+			resMsg.Msg = append(resMsg.Msg, "Access Token was refreshed.")
+			return nil
 		} else if initVal.update {
-			return makecfgfile(ggsrunCfg, initVal)
+			if err := makecfgfile(ggsrunCfg, initVal); err != nil {
+				return err
+			}
+			resMsg.Msg = append(resMsg.Msg, "Access Token was updated.")
+			return nil
 		}
 	} else {
 		if err := getNewAccesstoken(initVal, ggsrunCfg, cs); err != nil {
 			return err
 		}
-		return makecfgfile(ggsrunCfg, initVal)
+		if err := makecfgfile(ggsrunCfg, initVal); err != nil {
+			return err
+		}
+		resMsg.Msg = append(resMsg.Msg, "New Access Token was retrieved.")
+		return nil
 	}
-	// TODO: Add a message to a proper message container
-	// a.Msg = append(a.Msg, "Access Token was was used.")
+	resMsg.Msg = append(resMsg.Msg, "Access Token was used.")
 	return nil
 }
 

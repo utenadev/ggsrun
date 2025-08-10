@@ -26,25 +26,40 @@ func (e *ExecutionContainer) rearrangeByTerminal() *ExecutionContainer {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
-	var input string
-	fmt.Printf("## Please be careful.\n")
-	fmt.Printf("## When the script is rearranged, the revision of script is reset once.\n")
-	fmt.Printf("Reflect the rearranged result? [y or n] ... ")
-	if _, err := fmt.Scan(&input); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		os.Exit(1)
+	if {
+		var input string
+		fmt.Printf("## Please be careful.\n")
+		fmt.Printf("## When the script is rearranged, the revision of script is reset once.\n")
+		fmt.Printf("Reflect the rearranged result? [y or n] ... ")
+		_, err := fmt.Scan(&input) // cathch Error here.
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error reading input: %v. Please try again.\n", err)
+			// Continue the loop without exiting on error. 
+			continue
+		}
+		input = strings.ToLower(strings.TrimSpace(input)) // Convert input to lowercase and trim whitespace
+
+		if input == "y" {
+			s := spinner.New([]string{"/
+", "|
+", "\
+", "|
+"}, 100*time.Millisecond)
+			s.UpdateSpeed(200 * time.Millisecond)
+			fmt.Printf("Please wait a moment...")
+			s.Start()
+			e.rearrange(baseProject, changedIndx)
+			s.Stop()
+			fmt.Printf("\n")
+			return e
+		} else if input == "n" {
+			e.Msg = append(e.Msg, "Scripts of project were NOT rearranged.")
+			return e
+		} else {
+			fmt.Println("Invalid input. Please enter 'y' or 'n'.")
+			// Continue the loop without exiting on error.
+		}
 	}
-	if input == "y" {
-		s := spinner.New([]string{"/", "|", "\\", "|"}, 100*time.Millisecond)
-		s.UpdateSpeed(200 * time.Millisecond)
-		fmt.Printf("Please wait a moment...")
-		s.Start()
-		e.rearrange(baseProject, changedIndx)
-		s.Stop()
-		fmt.Printf("\n")
-		return e
-	}
-	e.Msg = append(e.Msg, "Scripts of project were NOT rearranged.")
 	return e
 }
 

@@ -88,16 +88,16 @@ Goの標準的なエラーハンドリングパターンにリファクタリン
     - [x] `executionError` を独立した関数 `doExecutionError` にする。
     - [x] `chkAtokenForExecution` を独立した関数 `doChkAtokenForExecution` にする。
 - [ ] `exeAPIWithout` 以外のコマンドフローをリファクタリングする。
-    - [ ] `defExecutionContainerWebApps` を独立した関数にする。
-    - [ ] `defDownloadContainer` を独立した関数にする。
-    - [ ] `defUploadContainer` を独立した関数にする。
+    - [x] `defExecutionContainerWebApps` を独立した関数にする。
+    - [x] `defDownloadContainer` を独立した関数にする。
+    - [x] `defUploadContainer` を独立した関数にする。
     - [ ] `defPermissionsContainer` を独立した関数にする。
     - [ ] `dispUpdateProjectContainer` を独立した関数にする。
     - [ ] `defDownloadByScriptContainer` を独立した関数にする。
     - [ ] `defUpdateProjectContainer` を独立した関数にする。
     - [ ] `convExecutionContainerToFileInf` を独立した関数にする。
     - [x] `exe2Function` を独立した関数にする。
-    - [ ] `webAppsWith` (ハンドラ) をリファクタリングする。
+    - [x] `webAppsWith` (ハンドラ) をリファクタリングする。
     - [ ] `downloadFiles` (ハンドラ) をリファクタリングする。
     - [ ] `uploadFiles` (ハンドラ) をリファクタリングする。
     - [ ] `updateProject` (ハンドラ) をリファクタリングする。

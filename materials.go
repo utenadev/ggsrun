@@ -327,9 +327,8 @@ func newExecutionContainer(initVal *InitVal, resMsg *ResMsg, ggsrunCfg *GgsrunCf
 	return e, nil
 }
 
-// DefExecutionContainerWebApps : Struct container for using WebApps
-func defExecutionContainerWebApps() *ExecutionContainer {
-	var err error
+// newExecutionContainerWebApps creates a new ExecutionContainer for Web Apps execution.
+func newExecutionContainerWebApps() (*ExecutionContainer, error) {
 	e := &ExecutionContainer{
 		&InitVal{},
 		&ResMsg{},
@@ -341,25 +340,26 @@ func defExecutionContainerWebApps() *ExecutionContainer {
 		&updateProjectFiles{},
 	}
 	e.InitVal.pstart = time.Now()
+	var err error
 	e.InitVal.workdir, err = filepath.Abs(".")
 	if err != nil {
-		panic(err) // This panic should be replaced with error return
+		return nil, fmt.Errorf("could not get current working directory: %w", err)
 	}
 	e.InitVal.cfgdir = os.Getenv(cfgpathenv)
 	if e.InitVal.cfgdir == "" {
 		e.InitVal.cfgdir = e.InitVal.workdir
 	}
-	return e
+	return e, nil
 }
 
-// DefDownloadContainer : Struct container for downloading files
-func (a *AuthContainer) defDownloadContainer(c *cli.Context) *utl.FileInf {
+// newDownloadContainer creates a new FileInf struct for downloading files.
+func newDownloadContainer(c *cli.Context, msg []string, accessToken, workdir, useServiceAccount string, pstartTime time.Time) *utl.FileInf {
 	p := &utl.FileInf{
-		Msgar:             a.Msg,
-		Accesstoken:       a.GgsrunCfg.Accesstoken,
-		Workdir:           a.InitVal.workdir,
-		PstartTime:        a.InitVal.pstart,
-		UseServiceAccount: a.InitVal.useServiceAccount,
+		Msgar:             msg,
+		Accesstoken:       accessToken,
+		Workdir:           workdir,
+		PstartTime:        pstartTime,
+		UseServiceAccount: useServiceAccount,
 		FileID:            c.String("fileid"),
 		ProjectID: func(c *cli.Context) string {
 			id := c.String("projectid")
@@ -390,14 +390,14 @@ func (a *AuthContainer) defDownloadContainer(c *cli.Context) *utl.FileInf {
 	return p
 }
 
-// DefUploadContainer : Struct container for uploading files
-func (a *AuthContainer) defUploadContainer(c *cli.Context) *utl.FileInf {
+// newUploadContainer creates a new FileInf struct for uploading files.
+func newUploadContainer(c *cli.Context, msg []string, accessToken, workdir, useServiceAccount string, pstartTime time.Time) *utl.FileInf {
 	p := &utl.FileInf{
-		Msgar:             a.Msg,
-		Accesstoken:       a.GgsrunCfg.Accesstoken,
-		Workdir:           a.InitVal.workdir,
-		PstartTime:        a.InitVal.pstart,
-		UseServiceAccount: a.InitVal.useServiceAccount,
+		Msgar:             msg,
+		Accesstoken:       accessToken,
+		Workdir:           workdir,
+		PstartTime:        pstartTime,
+		UseServiceAccount: useServiceAccount,
 		ChunkSize: func(chnk int64) int64 {
 			if chnk < 1 {
 				return 1048576
@@ -456,10 +456,9 @@ func newDownloadByScriptContainer(msg []string, accessToken, workdir string, pst
 	return p
 }
 
-// defUpdateProjectContainer : Struct container for downloading files by GAS
-func (e *ExecutionContainer) defUpdateProjectContainer(c *cli.Context) *ExecutionContainer {
-	e.UpFiles = regexp.MustCompile(`\s*,\s*`).Split(c.String("filename"), -1)
-	return e
+// newUpdateProjectContainer creates a slice of filenames for updating a project.
+func newUpdateProjectContainer(c *cli.Context) []string {
+	return regexp.MustCompile(`\s*,\s*`).Split(c.String("filename"), -1)
 }
 
 // convExecutionContainerToFileInf : Convert ExecutionContainer to FileInf

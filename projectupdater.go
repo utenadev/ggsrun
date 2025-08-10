@@ -20,27 +20,27 @@ func (e *ExecutionContainer) projectUpdateControl(c *cli.Context) *utl.FileInf {
 		e.GgsrunCfg.Scriptid = c.String("projectid")
 		if len(c.String("filename")) > 0 {
 			if !c.Bool("deletefiles") {
-				return e.defUpdateProjectContainer(c).
-					projectBackup(c).
+				e.UpFiles = newUpdateProjectContainer(c)
+				return e.projectBackup(c).
 					ProjectMaker().
 					projectUpdate2().
 					dispUpdateProjectContainer()
 			}
-			return e.defUpdateProjectContainer(c).
-				projectBackup(c).
+			e.UpFiles = newUpdateProjectContainer(c)
+			return e.projectBackup(c).
 				filesInProjectRemover().
 				projectUpdate2().
 				dispUpdateProjectContainer()
 		}
 		if c.Bool("rearrange") {
-			e.defUpdateProjectContainer(c).
-				projectBackup(c).
+			e.UpFiles = newUpdateProjectContainer(c)
+			e.projectBackup(c).
 				rearrangeByTerminal()
 		}
 		if len(c.String("rearrangewithfile")) > 0 {
 			data := getRearrangeTemplate(c.String("rearrangewithfile"))
-			e.defUpdateProjectContainer(c).
-				projectBackup(c).
+			e.UpFiles = newUpdateProjectContainer(c)
+			e.projectBackup(c).
 				rearrangeByFile(data)
 		}
 	} else {
@@ -71,9 +71,9 @@ func (e *ExecutionContainer) ProjectMaker() *ExecutionContainer {
 	for _, elm := range e.UpFiles {
 		if utl.ChkExtention(filepath.Ext(elm)) {
 			filedata := &File{
-				Name:   strings.Replace(filepath.Base(elm), filepath.Ext(elm), "", -1),
-				Type:   utl.ExtToType(filepath.Ext(elm), false),
-				Source: utl.ConvGasToUpload(elm),
+				Name:	strings.Replace(filepath.Base(elm), filepath.Ext(elm), "", -1),
+				Type:	utl.ExtToType(filepath.Ext(elm), false),
+				Source:	utl.ConvGasToUpload(elm),
 			}
 			var overwrite bool
 			for i, v := range e.Project.Files {
@@ -149,4 +149,38 @@ func removeEle(project *Project, elm string) (*Project, bool) {
 		return temp, true
 	}
 	return temp, false
+}
+
+// doProjectBackup downloads a backup of the project.
+func doProjectBackup(c *cli.Context, accessToken, scriptID string, pstart time.Time, workdir string) (*Project, []string, error) {
+	tokenparams := url.Values{}
+	tokenparams.Set("fields", "files,scriptId")
+	u, _ := url.Parse(appsscriptapi)
+	u.Path = path.Join(u.Path, scriptID+"/content")
+	r := &utl.RequestParams{
+		Method:		"GET",
+		APIURL:		u.String() + "?" + tokenparams.Encode(),
+		Data:		nil,
+		Contenttype:	"application/x-www-form-urlencoded",
+		Accesstoken:	accessToken,
+		Dtime:		30,
+	}
+	res, err := r.FetchAPI()
+	if err != nil {
+		utl.DispScopeError2(res)
+		return nil, nil, fmt.Errorf("project backup failed. Was the inputted project ID correct? Error: %w", err)
+	}
+	project := &Project{}
+	json.Unmarshal(res, project)
+	msg := []string{}
+	if c.Bool("backup") {
+		btok, _ := json.MarshalIndent(project, "", "\t")
+		filename := pstart.Format("20060102_150405") + ".gs"
+		if err := ioutil.WriteFile(filepath.Join(workdir, filename), btok, 0777); err != nil {
+			return nil, nil, fmt.Errorf("failed to write backup file to '%s': %w. Please check file permissions or disk space.", filepath.Join(workdir, filename), err)
+		}
+		dat := fmt.Sprintf("Project was saved as '%s'.", filename)
+		msg = append(msg, dat)
+	}
+	return project, msg, nil
 }

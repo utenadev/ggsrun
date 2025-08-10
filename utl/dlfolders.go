@@ -204,19 +204,20 @@ func google2ms(mimeType string) string {
 // dupChkFoldersFiles : Check duplication of folder names and filenames.
 func (p *FileInf) dupChkFoldersFiles(fileList *fileListDl) {
 	dupChk1 := map[string]bool{}
-	cnt1 := 2
+	cnt1 := 2 // Initialize outside the loop
 	for i, folderName := range fileList.FolderTree.Names {
 		if !dupChk1[folderName] {
 			dupChk1[folderName] = true
 		} else {
 			fileList.FolderTree.Names[i] = folderName + "_" + strconv.Itoa(cnt1)
+			cnt1++ // Increment here
 		}
 	}
 	extt := strings.ToLower(p.WantExt)
 	for i, list := range fileList.FileList {
 		if len(list.Files) > 0 {
 			dupChk2 := map[string]bool{}
-			cnt2 := 2
+			cnt2 := 2 // Initialize outside the loop
 			for j, file := range list.Files {
 				if !dupChk2[file.Name] {
 					dupChk2[file.Name] = true
@@ -227,7 +228,7 @@ func (p *FileInf) dupChkFoldersFiles(fileList *fileListDl) {
 					} else {
 						fileList.FileList[i].Files[j].Name = file.Name + "_" + strconv.Itoa(cnt2)
 					}
-					cnt2++
+					cnt2++ // Increment here
 				}
 				if extt != "" {
 					if google2ms(file.MimeType) != "" {

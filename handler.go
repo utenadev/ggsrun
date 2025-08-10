@@ -25,7 +25,7 @@ func exeAPIWithout(c *cli.Context) error {
 		return err
 	}
 
-	if err := doGoauth(initVal, ggsrunCfg, cs); err != nil {
+	if err := doGoauth(initVal, ggsrunCfg, cs, resMsg); err != nil {
 		return err
 	}
 
@@ -35,22 +35,13 @@ func exeAPIWithout(c *cli.Context) error {
 
 	resMsg.Msg = doExecutionAPIwithoutServer(param, resMsg.Msg)
 
-	// TODO: Refactor remaining chain to use DI
-	// The following lines still rely on ExecutionContainer methods
-	// which need to be refactored into standalone functions.
-	e, err := newExecutionContainer(initVal, resMsg, ggsrunCfg, param)
-	if err != nil {
-		return err
-	}
-
 	feedBackData, msg, err := doEsenderForExe1(c, param, ggsrunCfg, initVal.pstart, resMsg.Msg)
 	if err != nil {
 		return err
 	}
 	resMsg.Msg = msg
-	e.FeedBackData = feedBackData
 
-	doDispResult(c, e.FeedBackData, resMsg.Msg)
+	doDispResult(c, feedBackData, resMsg.Msg)
 	return nil
 }
 
@@ -67,7 +58,7 @@ func exeAPIWith(c *cli.Context) error {
 		return err
 	}
 
-	if err := doGoauth(initVal, ggsrunCfg, cs); err != nil {
+	if err := doGoauth(initVal, ggsrunCfg, cs, resMsg); err != nil {
 		return err
 	}
 
@@ -91,31 +82,69 @@ func exeAPIWith(c *cli.Context) error {
 // webAppsWith : exe3
 // No update project. Only execute GAS using Web Apps with server script.
 func webAppsWith(c *cli.Context) error {
-	defExecutionContainerWebApps().
-		webAppswithServerForExe3(utl.ConvGasToRun(c), c).
-		dispResult(c)
+	e, err := newExecutionContainerWebApps()
+	if err != nil {
+		return err
+	}
+
+	feedBackData, msg, dlFileByScript, err := doWebAppswithServerForExe3(utl.ConvGasToRun(c), c, e.InitVal.pstart)
+	if err != nil {
+		return err
+	}
+	e.FeedBackData = feedBackData
+	e.Msg = msg
+	e.DlFileByScript = dlFileByScript
+
+	doDispResult(c, e.FeedBackData, e.Msg)
 	return nil
 }
 
 // downloadFiles : Download files from Google Drive.
 func downloadFiles(c *cli.Context) error {
-	res := defAuthContainer(c).
-		ggsrunIni(c).
-		goauth().
-		defDownloadContainer(c).
+	initVal, resMsg, ggsrunCfg, _, cs, _, _, err := newAuthContainer(c)
+	if err != nil {
+		return err
+	}
+
+	ggsrunCfg, _, cs, err = doGgsrunIni(c, initVal)
+	if err != nil {
+		return err
+	}
+
+	if err := doGoauth(initVal, ggsrunCfg, cs, resMsg); err != nil {
+		return err
+	}
+
+	fileInf := newDownloadContainer(c, resMsg.Msg, ggsrunCfg.Accesstoken, initVal.workdir, initVal.useServiceAccount, initVal.pstart)
+
+	res := fileInf.
 		GetFileinf().
 		Downloader(c)
+
 	dispTransferResult(c, res)
 	return nil
 }
 
 // uploadFiles : Uploads files
 func uploadFiles(c *cli.Context) error {
-	res := defAuthContainer(c).
-		ggsrunIni(c).
-		goauth().
-		defUploadContainer(c).
-		Uploader(c)
+	initVal, resMsg, ggsrunCfg, _, cs, _, _, err := newAuthContainer(c)
+	if err != nil {
+		return err
+	}
+
+	ggsrunCfg, _, cs, err = doGgsrunIni(c, initVal)
+	if err != nil {
+		return err
+	}
+
+	if err := doGoauth(initVal, ggsrunCfg, cs, resMsg); err != nil {
+		return err
+	}
+
+	fileInf := newUploadContainer(c, resMsg.Msg, ggsrunCfg.Accesstoken, initVal.workdir, initVal.useServiceAccount, initVal.pstart)
+
+	res := fileInf.Uploader(c)
+
 	dispTransferResult(c, res)
 	return nil
 }

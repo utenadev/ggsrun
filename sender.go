@@ -217,7 +217,6 @@ func doEsenderForExe1(c *cli.Context, param *Param, ggsrunCfg *GgsrunCfg, pstart
 		result := rs["response"].(map[string]interface{})["result"]
 		if formattedError, isGasError := handleGasError(result); isGasError {
 			msg = append(msg, formattedError)
-			feedBackData.Response.Result.Result = nil // Clear the result to avoid double printing
 		} else {
 			feedBackData.Response.Result.Result = result
 		}
@@ -267,7 +266,6 @@ func doEsenderForExe2(c *cli.Context, param *Param, ggsrunCfg *GgsrunCfg, initVa
 
 	if formattedError, isGasError := handleGasError(feedBackData.Response.Result.Result); isGasError {
 		msg = append(msg, formattedError)
-		feedBackData.Response.Result.Result = nil // Clear the result to avoid double printing
 	} else {
 		dlfileinf, _ := json.Marshal(feedBackData.Response.Result.Result)
 		var rs map[string]interface{}
@@ -380,10 +378,10 @@ func (e *ExecutionContainer) projectBackup(c *cli.Context) error {
 	return nil
 }
 
-// WebAppswithServerForExe3 : Sends GAS to Google and retrieves results.
-func (e *ExecutionContainer) webAppswithServerForExe3(script string, c *cli.Context) error {
+// doWebAppswithServerForExe3 sends a request to a Web App and processes the result.
+func doWebAppswithServerForExe3(script string, c *cli.Context, pstart time.Time) (*FeedBackData, []string, *DlFileByScript, error) {
 	if len(c.String("url")) == 0 {
-		return fmt.Errorf("no URL for Web Apps")
+		return nil, nil, nil, fmt.Errorf("no URL for Web Apps")
 	}
 	tokenparams := url.Values{}
 	tokenparams.Set("com", script)
@@ -399,24 +397,27 @@ func (e *ExecutionContainer) webAppswithServerForExe3(script string, c *cli.Cont
 	}
 	body, err := r.FetchAPI()
 	if err != nil {
-		return fmt.Errorf("please check Web Apps Service and/or URL of it. Web Apps Service might not be deployed: %w", err)
+		return nil, nil, nil, fmt.Errorf("please check Web Apps Service and/or URL of it. Web Apps Service might not be deployed: %w", err)
 	}
-	json.Unmarshal(body, &e.FeedBackData.Response.Result)
-	e.FeedBackData.Response.Result.TotalEt = math.Trunc(time.Since(e.InitVal.pstart).Seconds()*1000) / 1000
-	e.FeedBackData.Response.Result.Uapi = wapps
-	dlfileinf, _ := json.Marshal(e.FeedBackData.Response.Result.Result)
+	feedBackData := &FeedBackData{}
+	msg := []string{}
+	dlFileByScript := &DlFileByScript{}
+	json.Unmarshal(body, &feedBackData.Response.Result)
+	feedBackData.Response.Result.TotalEt = math.Trunc(time.Since(pstart).Seconds()*1000) / 1000
+	feedBackData.Response.Result.Uapi = wapps
+	dlfileinf, _ := json.Marshal(feedBackData.Response.Result.Result)
 	var rs map[string]interface{}
 	if err := json.Unmarshal(dlfileinf, &rs); err == nil {
-		e.DlFileByScript.Fileid, _ = rs["fileid"].(string)
-		e.DlFileByScript.Extension, _ = rs["extension"].(string)
-		if len(e.DlFileByScript.Fileid) > 0 && len(e.DlFileByScript.Extension) > 0 {
+		dlFileByScript.Fileid, _ = rs["fileid"].(string)
+		dlFileByScript.Extension, _ = rs["extension"].(string)
+		if len(dlFileByScript.Fileid) > 0 && len(dlFileByScript.Extension) > 0 {
 			delete(rs, "fileid")
 			delete(rs, "extension")
-			e.FeedBackData.Response.Result.Result = rs
-			e.Msg = append(e.Msg, "This mode cannot download files. Because this mode is not authorization.")
+			feedBackData.Response.Result.Result = rs
+			msg = append(msg, "This mode cannot download files. Because this mode is not authorization.")
 		}
 	}
-	return nil
+	return feedBackData, msg, dlFileByScript, nil
 }
 
 // doByteSliceConverter converts the byte slice data from the execution result into a file.

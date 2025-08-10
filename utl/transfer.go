@@ -199,7 +199,7 @@ type uploadedFile struct {
 	fileS
 }
 
-//dispDup : For duplicating values.
+// dispDup : For duplicating values.
 type dispDup struct {
 	Name         string
 	FileID       string
@@ -215,7 +215,7 @@ func (p *FileInf) saveScript(data []byte) *FileInf {
 		filename := filepath.Join(p.Workdir, p.FileName+".json")
 		if chkFile(filename) && !p.OverWrite {
 			if !p.Skip {
-				fmt.Fprintf(os.Stderr, "Error: '%s' is exsinting. If you want to overwrite the file, please use option '--overwrite'.", filename)
+				fmt.Fprintf(os.Stderr, "Error: '%s' is existing. If you want to overwrite the file, please use option '--overwrite'.", filename)
 				os.Exit(1)
 			} else {
 				if p.Progress {
@@ -271,7 +271,7 @@ func (p *FileInf) saveScript(data []byte) *FileInf {
 			zipFileName := filepath.Join(p.Workdir, zn)
 			if chkFile(zipFileName) && !p.OverWrite {
 				if !p.Skip {
-					fmt.Fprintf(os.Stderr, "Error: '%s' is exsinting. If you want to overwrite the file, please use option '--overwrite'.", zipFileName)
+					fmt.Fprintf(os.Stderr, "Error: '%s' is existing. If you want to overwrite the file, please use option '--overwrite'.", zipFileName)
 					os.Exit(1)
 				} else {
 					if p.Progress {
@@ -291,7 +291,7 @@ func (p *FileInf) saveScript(data []byte) *FileInf {
 				scriptFileName := filepath.Join(p.Workdir, e.Name)
 				if chkFile(scriptFileName) && !p.OverWrite {
 					if !p.Skip {
-						fmt.Fprintf(os.Stderr, "Error: '%s' is exsinting. If you want to overwrite the file, please use option '--overwrite'.", scriptFileName)
+						fmt.Fprintf(os.Stderr, "Error: '%s' is existing. If you want to overwrite the file, please use option '--overwrite'.", scriptFileName)
 						os.Exit(1)
 					} else {
 						if p.Progress {
@@ -451,7 +451,7 @@ func (p *FileInf) writeFile(durl string) *FileInf {
 	dFileName = filepath.Join(p.Workdir, p.SaveName)
 	if chkFile(dFileName) && !p.OverWrite {
 		if !p.Skip {
-			fmt.Fprintf(os.Stderr, "Error: '%s' is exsinting. If you want to overwrite the file, please use option '--overwrite'.", dFileName)
+			fmt.Fprintf(os.Stderr, "Error: '%s' is existing. If you want to overwrite the file, please use option '--overwrite'.", dFileName)
 			os.Exit(1)
 		} else {
 			if p.Progress {
@@ -664,6 +664,12 @@ func defFormat(mime string) (string, string) {
 // At March 9th, 2020, I confirmed that this method had already been deprecated.
 // https://gist.github.com/tanaikech/0609f2cd989c28d6bd49d211b70b453d
 // I hope for reactivating this.
+//
+// This function is deprecated because the Google Drive API no longer supports direct multipart
+// uploads for Apps Script project files. The `fileUploader` function now handles all file uploads,
+// including Apps Script project files, by creating a new project or updating an existing one
+// via the Apps Script API, which is the recommended approach.
+//
 // func (p *FileInf) scriptUploader(metadata map[string]interface{}, pr []byte) *FileInf {
 // 	tokenparams := url.Values{}
 // 	tokenparams.Set("fields", "createdTime,fullFileExtension,id,mimeType,modifiedTime,name,parents,size,webContentLink,webViewLink,lastModifyingUser(displayName,emailAddress),owners(displayName,emailAddress,permissionId)")
@@ -784,16 +790,20 @@ func (p *FileInf) fileUploader(metadata map[string]interface{}, file string) *Fi
 
 // fileUpdater : Update a file metadata and file content.
 func (p *FileInf) fileUpdater(query url.Values, metadata map[string]interface{}, pr []byte) *FileInf {
-	var urlStr string
 	r := &RequestParams{
 		Method:      "PATCH",
 		Accesstoken: p.Accesstoken,
 		Dtime:       30,
 	}
+
+	// Ensure query is initialized
 	if query == nil {
 		query = url.Values{}
 	}
+	// Always set fields
 	query.Set("fields", "createdTime,fullFileExtension,id,mimeType,modifiedTime,name,parents,size,webContentLink,webViewLink,lastModifyingUser(displayName,emailAddress),owners(displayName,emailAddress,permissionId)")
+
+	var urlStr string
 	if (metadata != nil && pr != nil) || (metadata == nil && pr != nil) {
 		var b bytes.Buffer
 		w := multipart.NewWriter(&b)
@@ -840,6 +850,7 @@ func (p *FileInf) fileUpdater(query url.Values, metadata map[string]interface{},
 	json.Unmarshal(body, &uf)
 	p.UppedFiles = append(p.UppedFiles, uf)
 	return p
+
 }
 
 // Uploader : Main method for uploading
@@ -874,7 +885,10 @@ func (p *FileInf) Uploader(c *cli.Context) *FileInf {
 			}
 			if metadata.MimeType == "application/vnd.google-apps.script" {
 				if p.UseServiceAccount != "" {
-					return p.whenServiceAccountIsUsed()
+					p.whenServiceAccountIsUsed() // Display warning message
+					// Interrupt processing here because Apps Script file upload is not possible with a service account.
+					p.Msgar = append(p.Msgar, fmt.Sprintf("Skipping upload of Apps Script file '%s' due to Service Account limitation.", filepath.Base(elm)))
+					continue // Proceed to the next file
 				}
 				c.Set("projectname", metadata.Name)
 				p.createProjectMain(c)
@@ -892,7 +906,11 @@ func (p *FileInf) Uploader(c *cli.Context) *FileInf {
 		}
 	} else {
 		if p.UseServiceAccount != "" {
-			return p.whenServiceAccountIsUsed()
+			p.whenServiceAccountIsUsed() // Display warning message
+			// Interrupt processing here because project creation also involves Apps Script file upload.
+			p.Msgar = append(p.Msgar, "Skipping project creation due to Service Account limitation.")
+			p.TotalEt = math.Trunc(time.Now().Sub(p.PstartTime).Seconds()*1000) / 1000
+			return p
 		}
 		if p.ParentID == "" {
 			if p.ProjectType == "standalone" {
@@ -1026,14 +1044,17 @@ func (p *FileInf) createProject(timeZone string) []byte {
 		}
 		pr.Files = append(pr.Files, *filedata)
 	}
+	// Always create appsscript.json
+	manifestSource := "{\n  \"dependencies\": {\n  },\n  \"exceptionLogging\": \"STACKDRIVER\"\n}\n"
 	if timeZone != "" {
-		filedata := &filea{
-			Name:   "appsscript",
-			Type:   "json",
-			Source: "{\n  \"timeZone\": \"" + timeZone + "\",\n  \"dependencies\": {\n  },\n  \"exceptionLogging\": \"STACKDRIVER\"\n}\n",
-		}
-		pr.Files = append(pr.Files, *filedata)
+		manifestSource = "{\n  \"timeZone\": \"" + timeZone + "\",\n  \"dependencies\": {\n  },\n  \"exceptionLogging\": \"STACKDRIVER\"\n}\n"
 	}
+	filedata := &filea{
+		Name:   "appsscript",
+		Type:   "json",
+		Source: manifestSource,
+	}
+	pr.Files = append(pr.Files, *filedata)
 	pre, _ := json.Marshal(pr)
 	return pre
 }
@@ -1225,7 +1246,9 @@ func (p *FileInf) getList(ptoken, q, fields string) ([]byte, error) {
 
 // whenServiceAccountIsUsed : When ServiceAccount is used, there are some limitations.
 func (p *FileInf) whenServiceAccountIsUsed() *FileInf {
-	p.Msgar = append(p.Msgar, fmt.Sprintf("Warning: In the current stage, script files cannot be uploaded and downloaded by Service Account yet."))
+	warningMsg := "Warning: When using a Service Account, direct upload/download of Apps Script project files (.gs, .gas, .js, .html, .json) is not supported. This limitation applies only to Apps Script project files. Other file types can still be uploaded/downloaded. Please use OAuth2 for Apps Script project file operations."
+	fmt.Fprintf(os.Stderr, "%s\n", warningMsg) // add Msgar
+	p.Msgar = append(p.Msgar, warningMsg)
 	return p
 }
 
