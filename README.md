@@ -23,6 +23,8 @@ Will you want to develop GAS on your local PC? Generally, when we develop GAS, w
 
 Features of "ggsrun" are as follows.
 
+1. **[Simplified setup with `ggsrun init`.](#initialsetup)** <sup><font color="Red">New!</font></sup> An interactive command that guides you through the entire setup process.
+1. **Detailed error reporting from Google Apps Script.** <sup><font color="Red">New!</font></sup> When an error occurs in your GAS code, `ggsrun` now displays detailed information, including stack traces, making it easier to debug.
 1. **[Develops GAS using your local terminal and text editor which got accustomed to using.](help/README.md#demosublime)**<sup><font color="Red">Updated! (v1.4.0)</font></sup>
 1. **[Executes GAS by giving values to your script.](help/README.md#executesgasandretrievesresultvalues)**
 1. **[Executes GAS made of CoffeeScript.](help/README.md#coffeescript)**
@@ -92,7 +94,9 @@ $ ggsrun init
 
 Follow the on-screen prompts to complete the setup.
 
-## 2. Basic setting flow
+## 2. Basic setting flow (Manual Setup)
+
+**Note:** The `ggsrun init` command described above automates most of these steps and is the recommended method for new users. This section details the manual process.
 
 When you click each link of title, you can see the detail information.
 
