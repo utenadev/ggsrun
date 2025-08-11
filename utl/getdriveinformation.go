@@ -3,9 +3,7 @@
 package utl
 
 import (
-	"fmt"
 	"net/url"
-	"os"
 	"path"
 )
 

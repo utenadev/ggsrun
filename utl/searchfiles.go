@@ -3,11 +3,8 @@
 package utl
 
 import (
-	"fmt"
-	"math"
 	"regexp"
 	"strings"
-	"time"
 )
 
 // useRegex : Retrieve files using regex.
