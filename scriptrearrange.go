@@ -26,7 +26,7 @@ func (e *ExecutionContainer) rearrangeByTerminal() *ExecutionContainer {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
-	if {
+	if len(changedIndx) > 0 {
 		var input string
 		fmt.Printf("## Please be careful.\n")
 		fmt.Printf("## When the script is rearranged, the revision of script is reset once.\n")
@@ -40,11 +40,7 @@ func (e *ExecutionContainer) rearrangeByTerminal() *ExecutionContainer {
 		input = strings.ToLower(strings.TrimSpace(input)) // Convert input to lowercase and trim whitespace
 
 		if input == "y" {
-			s := spinner.New([]string{"/
-", "|
-", "\
-", "|
-"}, 100*time.Millisecond)
+			s := spinner.New([]string{"/", "|", "\\", "|"}, 100*time.Millisecond)
 			s.UpdateSpeed(200 * time.Millisecond)
 			fmt.Printf("Please wait a moment...")
 			s.Start()
