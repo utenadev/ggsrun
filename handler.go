@@ -299,11 +299,6 @@ func reAuth(c *cli.Context) error {
 	return nil
 }
 
-// interactiveSetup : New handler for 'init' command
-func interactiveSetup(c *cli.Context) error {
-	return RunInteractiveSetup(c)
-}
-
 // doDispResult formats and displays the final execution result to the user.
 func doDispResult(c *cli.Context, feedBackData *FeedBackData, msg []string) {
 	var dispRes []byte

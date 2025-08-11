@@ -3,20 +3,265 @@
 package main
 
 import (
+	"bufio"
+	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime"
+	"strings"
+	"time"
+
+	"ggsrun/utl"
 
 	"github.com/urfave/cli"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 )
 
 const gcpProjectURL = "https://console.cloud.google.com/projectcreate"
 const gcpCredURL = "https://console.cloud.google.com/apis/credentials"
-const scriptEditorURL = "https://script.google.com/d/%s/edit"
+
+// confirm asks a yes/no question to the user.
+func confirm(s string) bool {
+	r := bufio.NewReader(os.Stdin)
+	for {
+		fmt.Printf("%s [y/n]: ", s)
+		res, err := r.ReadString('\n')
+		if err != nil {
+			if err == io.EOF {
+				return false
+			}
+			fmt.Fprintf(os.Stderr, "Error reading input: %v\n", err)
+			return false
+		}
+		res = strings.ToLower(strings.TrimSpace(res))
+		if res == "y" || res == "yes" {
+			return true
+		} else if res == "n" || res == "no" {
+			return false
+		}
+	}
+}
 
 // RunInteractiveSetup runs the interactive setup process.
-// TODO: This is a placeholder implementation.
 func RunInteractiveSetup(c *cli.Context) error {
-	fmt.Println("Interactive setup is not yet implemented.")
+	fmt.Println("--- ggsrun Interactive Setup ---")
+
+	workdir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("could not get working directory: %w", err)
+	}
+	cfgdir, err := utl.GetConfigDir()
+	if err != nil {
+		return fmt.Errorf("could not get config directory: %w", err)
+	}
+	if _, _, err := chkInitFile(cfgFile, workdir, cfgdir); err == nil {
+		if !confirm("ggsrun.cfg already exists. Do you want to overwrite it and start a new setup?") {
+			fmt.Println("Setup aborted.")
+			return nil
+		}
+	}
+
+	fmt.Println("\nStep 1: Configure Client Secret")
+	fmt.Printf("If you don't have a client_secret.json file, please create one at:\n%s\n", gcpCredURL)
+	var clientSecretData []byte
+	var cs Cs
+	for {
+		fmt.Print("Enter the path to your client_secret.json file: ")
+		reader := bufio.NewReader(os.Stdin)
+		path, err := reader.ReadString('\n')
+		if err != nil {
+			if err == io.EOF {
+				fmt.Println()
+				return fmt.Errorf("input cancelled")
+			}
+			return fmt.Errorf("could not read path: %w", err)
+		}
+		clientSecretPath := strings.TrimSpace(path)
+		if data, err := os.ReadFile(clientSecretPath); err == nil {
+			if json.Unmarshal(data, &cs) != nil || (cs.Cid.ClientID == "" && cs.Ciw.ClientID == "") {
+				fmt.Fprintf(os.Stderr, "Error: '%s' is not a valid client_secret.json file. Please try again.\n", clientSecretPath)
+				continue
+			}
+			clientSecretData = data
+			break
+		}
+		fmt.Fprintf(os.Stderr, "Error: File not found at '%s'. Please try again.\n", clientSecretPath)
+	}
+	if len(cs.Cid.ClientID) == 0 && len(cs.Ciw.ClientID) > 0 {
+		cs.Cid = cs.Ciw
+	}
+
+	fmt.Println("\nStep 2: Authorize ggsrun")
+	fmt.Println("Your browser will open to ask for authorization.")
+	scopes := []string{
+		"https://www.googleapis.com/auth/drive",
+		"https://www.googleapis.com/auth/script.projects",
+	}
+	config, err := google.ConfigFromJSON(clientSecretData, scopes...)
+	if err != nil {
+		return fmt.Errorf("unable to parse client secret file to config: %v", err)
+	}
+	token, err := getTokenFromWeb(config)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve token from web: %v", err)
+	}
+	fmt.Println("Authorization successful.")
+
+	fmt.Println("\nStep 3: Create Google Apps Script Project")
+	if !confirm("Create a new Google Apps Script project for the server script?") {
+		fmt.Println("Setup aborted by user.")
+		return nil
+	}
+
+	projectTitle := "ggsrun-server"
+	createReq := &utl.RequestParams{
+		Method:      "POST",
+		APIURL:      "https://script.googleapis.com/v1/projects",
+		Data:        strings.NewReader(fmt.Sprintf(`{"title": "%s"}`, projectTitle)),
+		Contenttype: "application/json",
+		Accesstoken: token.AccessToken,
+	}
+	project, err := createReq.FetchAPI()
+	if err != nil {
+		return fmt.Errorf("could not create Apps Script project: %w", err)
+	}
+	var createdProject utl.AppsScriptApiInf
+	if err := json.Unmarshal(project, &createdProject); err != nil {
+		return fmt.Errorf("failed to parse created project response: %w", err)
+	}
+	fmt.Printf("Project '%s' created successfully. Script ID: %s\n", createdProject.Title, createdProject.ScriptId)
+
+	fmt.Println("\nStep 4: Upload Server Script")
+	files := []utl.File{
+		{
+			Name:   "server",
+			Type:   "SERVER_JS",
+			Source: serverScriptContent,
+		},
+		{
+			Name:   "appsscript",
+			Type:   "JSON",
+			Source: `{"timeZone":"Asia/Tokyo","dependencies":{},"exceptionLogging":"STACKDRIVER"}`,
+		},
+	}
+	uploadData, _ := json.Marshal(&utl.Project{Files: files})
+	updateReq := &utl.RequestParams{
+		Method:      "PUT",
+		APIURL:      fmt.Sprintf("https://script.googleapis.com/v1/projects/%s/content", createdProject.ScriptId),
+		Data:        strings.NewReader(string(uploadData)),
+		Contenttype: "application/json",
+		Accesstoken: token.AccessToken,
+	}
+	if _, err := updateReq.FetchAPI(); err != nil {
+		return fmt.Errorf("could not upload server script: %w", err)
+	}
+	fmt.Println("Server script uploaded successfully.")
+
+	ggsrunCfg := &GgsrunCfg{
+		Scriptid:     createdProject.ScriptId,
+		Clientid:     cs.Cid.ClientID,
+		Clientsecret: cs.Cid.Clientsecret,
+		Refreshtoken: token.RefreshToken,
+		Scopes:       scopes,
+	}
+	cfgData, _ := json.MarshalIndent(ggsrunCfg, "", "  ")
+	cfgPath := filepath.Join(cfgdir, cfgFile)
+	if err := os.WriteFile(cfgPath, cfgData, 0644); err != nil {
+		return fmt.Errorf("failed to write config file to %s: %w", cfgPath, err)
+	}
+	fmt.Printf("\nConfiguration saved to %s\n", cfgPath)
+
+	fmt.Println("\nStep 5: Enable APIs")
+	fmt.Println("Please ensure that both 'Google Apps Script API' and 'Google Drive API' are enabled for your Cloud project.")
+	fmt.Println("You can check their status and enable them if necessary at the following URL:")
+	projectID := cs.Cid.Projectid
+	if projectID != "" {
+		fmt.Printf("  - Apps Script API: https://console.cloud.google.com/apis/library/script.googleapis.com?project=%s\n", projectID)
+		fmt.Printf("  - Drive API: https://console.cloud.google.com/apis/library/drive.googleapis.com?project=%s\n", projectID)
+	} else {
+		fmt.Println("Could not determine Project ID from client_secret.json. Please visit your Google Cloud Console to enable APIs.")
+	}
+	fmt.Println("\nAlso, you need to enable 'Google Apps Script API' in the script editor settings:")
+	fmt.Println("  - https://script.google.com/home/usersettings")
+
+	fmt.Println("\nSetup complete! You can now use ggsrun.")
 	return nil
+}
+
+func getTokenFromWeb(config *oauth2.Config) (*oauth2.Token, error) {
+	config.RedirectURL = "http://localhost:8080"
+	authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline, oauth2.ApprovalForce)
+
+	fmt.Println("Please open the following URL in your browser, then authorize ggsrun:")
+	fmt.Println(authURL)
+	if err := openBrowser(authURL); err != nil {
+		log.Printf("Failed to open browser: %v. Please open the URL manually.", err)
+	}
+
+	codeCh := make(chan string)
+	errCh := make(chan error)
+	server := &http.Server{Addr: ":8080"}
+
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		code := r.FormValue("code")
+		if code == "" {
+			fmt.Fprintf(w, "Error: No auth code received.")
+			errCh <- fmt.Errorf("no auth code received in callback")
+			return
+		}
+		fmt.Fprintf(w, "Authorization successful! You can close this tab.")
+		codeCh <- code
+	})
+
+	go func() {
+		if err := server.ListenAndServe(); err != http.ErrServerClosed {
+			errCh <- fmt.Errorf("failed to start local server: %v", err)
+		}
+	}()
+
+	var authCode string
+	select {
+	case code := <-codeCh:
+		authCode = code
+	case err := <-errCh:
+		return nil, err
+	case <-time.After(5 * time.Minute):
+		return nil, fmt.Errorf("timed out waiting for authorization code")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+	if err := server.Shutdown(ctx); err != nil {
+		log.Printf("Failed to shut down local server: %v", err)
+	}
+
+	tok, err := config.Exchange(context.TODO(), authCode)
+	if err != nil {
+		return nil, fmt.Errorf("unable to retrieve token from web: %v", err)
+	}
+	return tok, nil
+}
+
+func openBrowser(url string) error {
+	var err error
+	switch runtime.GOOS {
+	case "linux":
+		err = exec.Command("xdg-open", url).Start()
+	case "windows":
+		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
+	case "darwin":
+		err = exec.Command("open", url).Start()
+	default:
+		err = fmt.Errorf("unsupported platform")
+	}
+	return err
 }
 
 // serverScriptContent holds the content of server/server.gs
@@ -117,7 +362,14 @@ function Beacon() {
               var resValues = (0,eval)((0,eval)(rec.com));
               res = emessage.call(this, rec.com ? resValues : "Error on GAS side: Bad parameters.", startTime, dateDat);
           } catch(err) {
-              res = emessage.call(this, "Script Error on GAS side: " + err.message, startTime);
+              var errorDetail = {
+                gasError: {
+                  name: err.name,
+                  message: err.message,
+                  stack: err.stack,
+                }
+              };
+              res = emessage.call(this, errorDetail, startTime);
           }
           return res;
       };
@@ -198,4 +450,5 @@ function Beacon() {
       return ggsrun;
   })();
   return x.ggsrun = ggsrun;
-})(this);`
+})(this);
+`

@@ -482,7 +482,7 @@ func main() {
 			Aliases:     []string{"it"},
 			Usage:       "Interactive setup for ggsrun.",
 			Description: "This command guides you through the setup process for client_secret.json and ggsrun.cfg.",
-			Action:      interactiveSetup,
+			Action:      RunInteractiveSetup,
 		},
 	}
 	app.CommandNotFound = commandNotFound
