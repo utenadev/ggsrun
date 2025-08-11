@@ -5,7 +5,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -14,6 +17,8 @@ import (
 
 	"github.com/urfave/cli"
 )
+
+const appsscriptapi = "https://script.googleapis.com/v1/projects"
 
 // projectUpdateControl : Main method for updating project.
 // doProjectUpdateControl is the main method for updating a project.

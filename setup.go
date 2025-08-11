@@ -19,6 +19,13 @@ const gcpProjectURL = "https://console.cloud.google.com/projectcreate"
 const gcpCredURL = "https://console.cloud.google.com/apis/credentials"
 const scriptEditorURL = "https://script.google.com/d/%s/edit"
 
+// RunInteractiveSetup runs the interactive setup process.
+// TODO: This is a placeholder implementation.
+func RunInteractiveSetup(c *cli.Context) error {
+	fmt.Println("Interactive setup is not yet implemented.")
+	return nil
+}
+
 // serverScriptContent holds the content of server/server.gs
 const serverScriptContent = `
 var VERSION = "1.0.0";
