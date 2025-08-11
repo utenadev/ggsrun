@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"time"
 
 	"ggsrun/utl"
 
@@ -364,8 +363,4 @@ func newAuthContainerForReAuth(c *cli.Context) (*InitVal, *GgsrunCfg, *Cs, error
 	return new(InitVal), new(GgsrunCfg), new(Cs), nil
 }
 
-func doReAuth(initVal *InitVal, ggsrunCfg *GgsrunCfg, cs *Cs) error {
-	fmt.Println("Warning: doReAuth is a placeholder.")
-	return nil
-}
 

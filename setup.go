@@ -3,14 +3,7 @@
 package main
 
 import (
-	"bufio"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-
-	"ggsrun/utl"
 
 	"github.com/urfave/cli"
 )

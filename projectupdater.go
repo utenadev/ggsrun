@@ -18,8 +18,6 @@ import (
 	"github.com/urfave/cli"
 )
 
-const appsscriptapi = "https://script.googleapis.com/v1/projects"
-
 // projectUpdateControl : Main method for updating project.
 // doProjectUpdateControl is the main method for updating a project.
 func doProjectUpdateControl(c *cli.Context, ggsrunCfg *GgsrunCfg, upFiles []string, msg []string, pstartTime time.Time) *utl.FileInf {

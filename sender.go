@@ -9,7 +9,6 @@ import (
 	"io/ioutil"
 	"math"
 	"net/url"
-	"os"
 	"path"
 	"path/filepath"
 	"regexp"
