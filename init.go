@@ -5,7 +5,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/urfave/cli"
@@ -60,12 +60,12 @@ func doGgsrunIni(c *cli.Context, initVal *InitVal) (*GgsrunCfg, *Param, *Cs, err
 // It returns the file content, the directory where the file was found, and an error.
 func chkInitFile(file, workdir, cfgdir string) ([]byte, string, error) {
 	// Check working directory
-	if body, err := ioutil.ReadFile(filepath.Join(workdir, file)); err == nil {
+	if body, err := os.ReadFile(filepath.Join(workdir, file)); err == nil {
 		return body, "work", nil
 	}
 	// Check config directory if it's different
 	if workdir != cfgdir {
-		if body, err := ioutil.ReadFile(filepath.Join(cfgdir, file)); err == nil {
+		if body, err := os.ReadFile(filepath.Join(cfgdir, file)); err == nil {
 			return body, "env", nil
 		}
 	}
