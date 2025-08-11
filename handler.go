@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 
 	"ggsrun/utl"
 
@@ -187,7 +188,7 @@ func revisionFiles(c *cli.Context) error {
 	}
 
 	fileInf := newDownloadContainer(c, resMsg.Msg, ggsrunCfg.Accesstoken, initVal.workdir, initVal.useServiceAccount, initVal.pstart)
-	res := doGetRevisionList(c, fileInf)
+	res := utl.doGetRevisionList(c, fileInf)
 	dispTransferResult(c, res)
 	return nil
 }
@@ -209,7 +210,7 @@ func showFileList(c *cli.Context) error {
 	}
 
 	fileInf := newDownloadContainer(c, resMsg.Msg, ggsrunCfg.Accesstoken, initVal.workdir, initVal.useServiceAccount, initVal.pstart)
-	res := doGetFileList(c, fileInf)
+	res := utl.doGetFileList(c, fileInf)
 	dispTransferResult(c, res)
 	return nil
 }
@@ -231,7 +232,7 @@ func searchFilesByQueryAndRegex(c *cli.Context) error {
 	}
 
 	fileInf := newDownloadContainer(c, resMsg.Msg, ggsrunCfg.Accesstoken, initVal.workdir, initVal.useServiceAccount, initVal.pstart)
-	res := doSearchFiles(fileInf)
+	res := utl.doSearchFiles(fileInf)
 	dispTransferResult(c, res)
 	return nil
 }
@@ -253,7 +254,7 @@ func managePermissions(c *cli.Context) error {
 	}
 
 	fileInf := newPermissionsContainer(c, resMsg.Msg, ggsrunCfg.Accesstoken, initVal.workdir, initVal.useServiceAccount, initVal.pstart)
-	res := doManagePermissions(fileInf)
+	res := utl.doManagePermissions(fileInf)
 	dispTransferResult(c, res)
 	return nil
 }
@@ -275,7 +276,7 @@ func getDriveInformation(c *cli.Context) error {
 	}
 
 	fileInf := newDownloadContainer(c, resMsg.Msg, ggsrunCfg.Accesstoken, initVal.workdir, initVal.useServiceAccount, initVal.pstart)
-	res := doGetDriveInformation(fileInf)
+	res := utl.doGetDriveInformation(fileInf)
 	dispTransferResult(c, res)
 	return nil
 }
@@ -342,4 +343,22 @@ func dispTransferResult(c *cli.Context, f *utl.FileInf) {
 func commandNotFound(c *cli.Context, command string) {
 	fmt.Fprintf(os.Stderr, "'%s' is not a %s command. Check '%s --help' or '%s -h'.", command, c.App.Name, c.App.Name, c.App.Name)
 	os.Exit(2)
+}
+
+// TODO: The following functions are placeholders to fix build errors.
+// The actual implementations should be provided.
+
+func doExe1Function(c *cli.Context, initVal *InitVal, resMsg *ResMsg, ggsrunCfg *GgsrunCfg, param *Param) error {
+	fmt.Println("Warning: doExe1Function is not implemented. This is a placeholder.")
+	return nil
+}
+
+func doExe2Function(c *cli.Context, param *Param, ggsrunCfg *GgsrunCfg, initVal *InitVal, msg []string, dlFileByScript *DlFileByScript) (*FeedBackData, []string, *DlFileByScript, error) {
+	fmt.Println("Warning: doExe2Function is not implemented. This is a placeholder.")
+	return new(FeedBackData), msg, dlFileByScript, nil
+}
+
+func doWebAppswithServerForExe3(script string, c *cli.Context, pstart time.Time) (*FeedBackData, []string, *DlFileByScript, error) {
+	fmt.Println("Warning: doWebAppswithServerForExe3 is not implemented. This is a placeholder.")
+	return new(FeedBackData), []string{"placeholder"}, new(DlFileByScript), nil
 }
