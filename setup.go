@@ -198,4 +198,4 @@ function Beacon() {
       return ggsrun;
   })();
   return x.ggsrun = ggsrun;
-})(this);
+})(this);`
