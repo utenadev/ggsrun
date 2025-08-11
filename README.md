@@ -1,3 +1,5 @@
+[日本語版](./README.ja.md)
+
 # ggsrun
 
 <a name="TOP"></a>
