@@ -27,6 +27,25 @@ import (
 const gcpProjectURL = "https://console.cloud.google.com/projectcreate"
 const gcpCredURL = "https://console.cloud.google.com/apis/credentials"
 
+// getConfigDir returns the path to the configuration directory.
+func getConfigDir() (string, error) {
+	var dir string
+	switch runtime.GOOS {
+	case "windows":
+		dir = os.Getenv("APPDATA")
+		if dir == "" {
+			return "", fmt.Errorf("APPDATA environment variable is not set")
+		}
+	default: // For Mac, Linux, and other Unix-like systems.
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		dir = filepath.Join(home, ".config")
+	}
+	return filepath.Join(dir, "ggsrun"), nil
+}
+
 // confirm asks a yes/no question to the user.
 func confirm(s string) bool {
 	r := bufio.NewReader(os.Stdin)
@@ -57,7 +76,7 @@ func RunInteractiveSetup(c *cli.Context) error {
 	if err != nil {
 		return fmt.Errorf("could not get working directory: %w", err)
 	}
-	cfgdir, err := utl.GetConfigDir()
+	cfgdir, err := getConfigDir()
 	if err != nil {
 		return fmt.Errorf("could not get config directory: %w", err)
 	}
@@ -139,7 +158,7 @@ func RunInteractiveSetup(c *cli.Context) error {
 	fmt.Printf("Project '%s' created successfully. Script ID: %s\n", createdProject.Title, createdProject.ScriptId)
 
 	fmt.Println("\nStep 4: Upload Server Script")
-	files := []utl.File{
+	files := []File{
 		{
 			Name:   "server",
 			Type:   "SERVER_JS",
@@ -151,7 +170,7 @@ func RunInteractiveSetup(c *cli.Context) error {
 			Source: `{"timeZone":"Asia/Tokyo","dependencies":{},"exceptionLogging":"STACKDRIVER"}`,
 		},
 	}
-	uploadData, _ := json.Marshal(&utl.Project{Files: files})
+	uploadData, _ := json.Marshal(&Project{Files: files})
 	updateReq := &utl.RequestParams{
 		Method:      "PUT",
 		APIURL:      fmt.Sprintf("https://script.googleapis.com/v1/projects/%s/content", createdProject.ScriptId),
