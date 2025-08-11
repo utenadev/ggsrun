@@ -122,9 +122,9 @@ func (p *FileInf) getURL() (*url.URL, error) {
 	return u, nil
 }
 
-// ManagePermissions : Main method of Manage Permissions.
-// doManagePermissions manages permissions of files and folders in Google Drive.
-func doManagePermissions(fileInf *FileInf) *FileInf {
+// DoManagePermissions : Main method of Manage Permissions.
+// DoManagePermissions manages permissions of files and folders in Google Drive.
+func DoManagePermissions(fileInf *FileInf) *FileInf {
 	// TODO: Refactor internal logic to use passed arguments instead of FileInf fields
 	// For now, returning the passed FileInf to allow compilation.
 	return fileInf

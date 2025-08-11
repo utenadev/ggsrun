@@ -188,7 +188,7 @@ func revisionFiles(c *cli.Context) error {
 	}
 
 	fileInf := newDownloadContainer(c, resMsg.Msg, ggsrunCfg.Accesstoken, initVal.workdir, initVal.useServiceAccount, initVal.pstart)
-	res := utl.doGetRevisionList(c, fileInf)
+	res := utl.DoGetRevisionList(c, fileInf)
 	dispTransferResult(c, res)
 	return nil
 }
@@ -210,7 +210,7 @@ func showFileList(c *cli.Context) error {
 	}
 
 	fileInf := newDownloadContainer(c, resMsg.Msg, ggsrunCfg.Accesstoken, initVal.workdir, initVal.useServiceAccount, initVal.pstart)
-	res := utl.doGetFileList(c, fileInf)
+	res := utl.DoGetFileList(c, fileInf)
 	dispTransferResult(c, res)
 	return nil
 }
@@ -232,7 +232,7 @@ func searchFilesByQueryAndRegex(c *cli.Context) error {
 	}
 
 	fileInf := newDownloadContainer(c, resMsg.Msg, ggsrunCfg.Accesstoken, initVal.workdir, initVal.useServiceAccount, initVal.pstart)
-	res := utl.doSearchFiles(fileInf)
+	res := utl.DoSearchFiles(fileInf)
 	dispTransferResult(c, res)
 	return nil
 }
@@ -254,7 +254,7 @@ func managePermissions(c *cli.Context) error {
 	}
 
 	fileInf := newPermissionsContainer(c, resMsg.Msg, ggsrunCfg.Accesstoken, initVal.workdir, initVal.useServiceAccount, initVal.pstart)
-	res := utl.doManagePermissions(fileInf)
+	res := utl.DoManagePermissions(fileInf)
 	dispTransferResult(c, res)
 	return nil
 }
@@ -276,7 +276,7 @@ func getDriveInformation(c *cli.Context) error {
 	}
 
 	fileInf := newDownloadContainer(c, resMsg.Msg, ggsrunCfg.Accesstoken, initVal.workdir, initVal.useServiceAccount, initVal.pstart)
-	res := utl.doGetDriveInformation(fileInf)
+	res := utl.DoGetDriveInformation(fileInf)
 	dispTransferResult(c, res)
 	return nil
 }
@@ -288,7 +288,8 @@ func reAuth(c *cli.Context) error {
 		return err
 	}
 
-	if err := doGgsrunIni(c, initVal); err != nil {
+	ggsrunCfg, _, cs, err = doGgsrunIni(c, initVal)
+	if err != nil {
 		return err
 	}
 
@@ -353,12 +354,3 @@ func doExe1Function(c *cli.Context, initVal *InitVal, resMsg *ResMsg, ggsrunCfg 
 	return nil
 }
 
-func doExe2Function(c *cli.Context, param *Param, ggsrunCfg *GgsrunCfg, initVal *InitVal, msg []string, dlFileByScript *DlFileByScript) (*FeedBackData, []string, *DlFileByScript, error) {
-	fmt.Println("Warning: doExe2Function is not implemented. This is a placeholder.")
-	return new(FeedBackData), msg, dlFileByScript, nil
-}
-
-func doWebAppswithServerForExe3(script string, c *cli.Context, pstart time.Time) (*FeedBackData, []string, *DlFileByScript, error) {
-	fmt.Println("Warning: doWebAppswithServerForExe3 is not implemented. This is a placeholder.")
-	return new(FeedBackData), []string{"placeholder"}, new(DlFileByScript), nil
-}

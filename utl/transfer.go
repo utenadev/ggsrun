@@ -1099,8 +1099,8 @@ func extToGMime(ext string) string {
 	return gm["importFormats"].(map[string]interface{})[st].([]interface{})[0].(string)
 }
 
-// doGetFileList retrieves a file list from Google Drive.
-func doGetFileList(c *cli.Context, fileInf *FileInf) *FileInf {
+// DoGetFileList retrieves a file list from Google Drive.
+func DoGetFileList(c *cli.Context, fileInf *FileInf) *FileInf {
 	// TODO: Refactor internal logic to use passed arguments instead of FileInf fields
 	// For now, returning the passed FileInf to allow compilation.
 	return fileInf
