@@ -12,7 +12,7 @@ import (
 
 	"ggsrun/utl"
 
-	"github.comcom/urfave/cli"
+	"github.com/urfave/cli"
 )
 
 // projectUpdateControl : Main method for updating project.
