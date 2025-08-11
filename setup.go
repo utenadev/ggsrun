@@ -88,11 +88,12 @@ func RunInteractiveSetup(c *cli.Context) error {
 	}
 
 	fmt.Println("\nStep 1: Configure Client Secret")
-	fmt.Printf("If you don't have a client_secret.json file, please create one at:\n%s\n", gcpCredURL)
+	fmt.Println("This tool needs a `client_secret.json` file.")
+	fmt.Printf("Please create and download it from:\n%s\n", gcpCredURL)
 	var clientSecretData []byte
 	var cs Cs
 	for {
-		fmt.Print("Enter the path to your client_secret.json file: ")
+		fmt.Print("\nEnter path to client_secret.json: ")
 		reader := bufio.NewReader(os.Stdin)
 		path, err := reader.ReadString('\n')
 		if err != nil {
