@@ -27,22 +27,22 @@
 
 1. **[`ggsrun init` によるセットアップの簡略化。](#initialsetup)** <sup><font color="Red">New!</font></sup> セットアッププロセス全体をガイドする対話式のコマンドです。
 1. **Google Apps Scriptからの詳細なエラー報告。** <sup><font color="Red">New!</font></sup> GASコードでエラーが発生した際に、ggsrunはスタックトレースを含む詳細な情報を表示するようになり、デバッグが容易になりました。
-1. **[使い慣れたローカルターミナルとテキストエディタを使ってGASを開発できます。](help/README.md#demosublime)**<sup><font color="Red">Updated! (v1.4.0)</font></sup>
-1. **[スクリプトに値を与えてGASを実行できます。](help/README.md#executesgasandretrievesresultvalues)**
-1. **[CoffeeScriptで書かれたGASを実行できます。](help/README.md#coffeescript)**
-1. **[GASを実行しながら、スプレッドシート、ドキュメント、プレゼンテーションを同時にダウンロードできます。](help/README.md#downloadfiles)**
-1. **[Google Driveからファイルをダウンロードしたり、Google Driveへファイルをアップロードしたりできます。](help/README.md#uploadfiles)** <sup><font color="Red">Updated! (v1.4.1)</font></sup>
-1. **[スタンドアロンスクリプトとバインドスクリプトをダウンロードできます。](help/README.md#downloadfiles)** <sup><font color="Red">Updated! (v1.4.0)</font></sup>
-1. **[特定のフォルダ内のすべてのファイルとフォルダをダウンロードできます。](help/README.md#downloadfilesfromfolder)** <sup><font color="Red">Updated! (v1.5.2)</font></sup>
-1. **[スクリプトファイルをアップロードし、スタンドアロンスクリプトやコンテナバインドスクリプトとしてプロジェクトを作成できます。](help/README.md#uploadfiles)** <sup><font color="Red">Updated! (v1.5.2)</font></sup>
-1. **[プロジェクトを更新できます。](help/README.md#updateproject)** <sup><font color="Red">Updated! (v1.4.0)</font></sup>
-1. **[Googleドキュメントの変更履歴ファイルやプロジェクトのバージョンを取得できます。](help/README.md#revisionfile)** <sup><font color="Red">Updated! (v1.4.0)</font></sup>
-1. **[プロジェクト内のスクリプトを並べ替えることができます。](help/README.md#rearrangescripts)** <sup><font color="Red">Updated! (v1.4.0)</font></sup>
-1. **[プロジェクト内のマニフェストファイルを変更できます。](help/README.md#modifymanifests)**
-1. **[検索クエリと正規表現を使ってGoogle Drive内のファイルを検索できます。](help/README.md#searchfilesusingregex)** <sup><font color="Red">Updated! (v1.6.0)</font></sup>
-1. **[ファイルの権限を管理できます。](help/README.md#managepermissions)** <sup><font color="Red">Updated! (v1.7.0)</font></sup>
-1. **[Driveの情報を取得できます。](help/README.md#getdriveinformation)** <sup><font color="Red">Updated! (v1.7.0)</font></sup>
-1. **[ggsrunはOAuth2だけでなく、サービスアカウントでも使用できるようになりました。](help/README.md#useserviceaccount)** <sup><font color="Red">Updated! (v1.7.0)</font></sup>
+1. **[使い慣れたローカルターミナルとテキストエディタを使ってGASを開発できます。](help/README.ja.md#demosublime)**<sup><font color="Red">Updated! (v1.4.0)</font></sup>
+1. **[スクリプトに値を与えてGASを実行できます。](help/README.ja.md#executesgasandretrievesresultvalues)**
+1. **[CoffeeScriptで書かれたGASを実行できます。](help/README.ja.md#coffeescript)**
+1. **[GASを実行しながら、スプレッドシート、ドキュメント、プレゼンテーションを同時にダウンロードできます。](help/README.ja.md#downloadfiles)**
+1. **[Google Driveからファイルをダウンロードしたり、Google Driveへファイルをアップロードしたりできます。](help/README.ja.md#uploadfiles)** <sup><font color="Red">Updated! (v1.4.1)</font></sup>
+1. **[スタンドアロンスクリプトとバインドスクリプトをダウンロードできます。](help/README.ja.md#downloadfiles)** <sup><font color="Red">Updated! (v1.4.0)</font></sup>
+1. **[特定のフォルダ内のすべてのファイルとフォルダをダウンロードできます。](help/README.ja.md#downloadfilesfromfolder)** <sup><font color="Red">Updated! (v1.5.2)</font></sup>
+1. **[スクリプトファイルをアップロードし、スタンドアロンスクリプトやコンテナバインドスクリプトとしてプロジェクトを作成できます。](help/README.ja.md#uploadfiles)** <sup><font color="Red">Updated! (v1.5.2)</font></sup>
+1. **[プロジェクトを更新できます。](help/README.ja.md#updateproject)** <sup><font color="Red">Updated! (v1.4.0)</font></sup>
+1. **[Googleドキュメントの変更履歴ファイルやプロジェクトのバージョンを取得できます。](help/README.ja.md#revisionfile)** <sup><font color="Red">Updated! (v1.4.0)</font></sup>
+1. **[プロジェクト内のスクリプトを並べ替えることができます。](help/README.ja.md#rearrangescripts)** <sup><font color="Red">Updated! (v1.4.0)</font></sup>
+1. **[プロジェクト内のマニフェストファイルを変更できます。](help/README.ja.md#modifymanifests)**
+1. **[検索クエリと正規表現を使ってGoogle Drive内のファイルを検索できます。](help/README.ja.md#searchfilesusingregex)** <sup><font color="Red">Updated! (v1.6.0)</font></sup>
+1. **[ファイルの権限を管理できます。](help/README.ja.md#managepermissions)** <sup><font color="Red">Updated! (v1.7.0)</font></sup>
+1. **[Driveの情報を取得できます。](help/README.ja.md#getdriveinformation)** <sup><font color="Red">Updated! (v1.7.0)</font></sup>
+1. **[ggsrunはOAuth2だけでなく、サービスアカウントでも使用できるようになりました。](help/README.ja.md#useserviceaccount)** <sup><font color="Red">Updated! (v1.7.0)</font></sup>
 
 <a name="howtoinstall"></a>
 
@@ -102,13 +102,13 @@ $ ggsrun init
 
 各タイトルのリンクをクリックすると、詳細情報を見ることができます。
 
-1. [ggsrunサーバーのセットアップ（Google側）](help/README.md#setupggsrunserver)
+1. [ggsrunサーバーのセットアップ（Google側）](help/README.ja.md#setupggsrunserver)
    - 新規プロジェクトを作成し、サーバーをライブラリとしてインストールします。
    - [API実行可能ファイルとしてデプロイ](https://developers.google.com/apps-script/api/how-tos/execute#step_1_deploy_the_script_as_an_api_executable)します。「このスクリプトにアクセスできるユーザー」として「自分のみ」を選択してください。
    - [サーバーをライブラリとしてインストール](https://developers.google.com/apps-script/guides/libraries#managing_libraries)します。ライブラリのスクリプトIDは以下の通りです。
      - **`115-19njNHlbT-NI0hMPDnVO1sdrw2tJKCAJgOTIAPbi_jq3tOo4lVRov`**
    - **<u>ライブラリをインストールした後、スクリプトエディタで保存ボタンを押してください。</u>** これは非常に重要です！これにより、ライブラリが完全に反映されます。
-1. [クライアントID、クライアントシークレットの取得](help/README.md#getclientid)
+1. [クライアントID、クライアントシークレットの取得](help/README.ja.md#getclientid)
    - スクリプトエディタで
      - リソース -> Cloud Platformプロジェクト
      - "This script is currently associated with project:" の下部をクリック
@@ -120,14 +120,14 @@ $ ggsrun init
      - 名前を入力（任意の名前）
      - 完了
      - ダウンロードボタンを使って、クライアントIDとクライアントシークレットを含むJSONファイルを **`client_secret.json`**としてダウンロードします。
-1. [APIの有効化](help/README.md#onstallexecutionapi)
+1. [APIの有効化](help/README.ja.md#onstallexecutionapi)
    - ggsrunはGoogle Apps Script APIとDrive APIを使用します。APIコンソールでこれらを有効にしてください。以下から直接アクセスできます。プロジェクトIDはダウンロードした `client_secret.json` で確認できます。
      - `https://console.cloud.google.com/apis/library/script.googleapis.com/?project=### project ID ###`
        - **また、[https://script.google.com/home/usersettings](https://script.google.com/home/usersettings) も有効にする必要があります。ONにしてください。**
      - `https://console.cloud.google.com/apis/api/drive.googleapis.com/?project=### project ID ###`
-1. [ggsrunの設定ファイル作成](help/README.md#Createconfigurefile)
+1. [ggsrunの設定ファイル作成](help/README.ja.md#Createconfigurefile)
    - `client_secret.json` があるディレクトリで `$ ggsrun auth` を実行します。
-1. [テスト実行](help/README.md#runggsrun)
+1. [テスト実行](help/README.ja.md#runggsrun)
    - `function main(){return Beacon()}` というサンプルスクリプトを `sample.gs` として作成します。
    - サーバーをインストールしたプロジェクトのスクリプトIDを使用して `$ ggsrun e2 -s sample.gs -i [スクリプトID] -j` を実行します。
 
@@ -152,45 +152,45 @@ $ ggsrun init
 
 # v1.7.0から、ggsrunはサービスアカウントを使ってGoogle Driveにアクセスできるようになりました。 <sup><font color="Red">Updated! (v1.7.0)</font></sup>
 
-ggsrunは[サービスアカウント](https://developers.google.com/identity/protocols/OAuth2ServiceAccount)を使ってGoogle Driveにアクセスできます。OAuth2を使用する場合、ご自身のGoogle Driveのファイルやフォルダを閲覧できます。サービスアカウントを使用する場合、サービスアカウント用のGoogle Drive内のものを閲覧できます。つまり、OAuth2用のDriveとサービスアカウント用のDriveは異なります。この点にご注意ください。また、サービスアカウントを使用する場合、できることとできないことがあります。それについては、[こちら](help/README.md#useserviceaccount)をお読みください。
+ggsrunは[サービスアカウント](https://developers.google.com/identity/protocols/OAuth2ServiceAccount)を使ってGoogle Driveにアクセスできます。OAuth2を使用する場合、ご自身のGoogle Driveのファイルやフォルダを閲覧できます。サービスアカウントを使用する場合、サービスアカウント用のGoogle Drive内のものを閲覧できます。つまり、OAuth2用のDriveとサービスアカウント用のDriveは異なります。この点にご注意ください。また、サービスアカウントを使用する場合、できることとできないことがあります。それについては、[こちら](help/README.ja.md#useserviceaccount)をお読みください。
 
 # ggsrunの使い方
 
-1. [GASを実行して結果の値を取得する](help/README.md#executesgasandretrievesresultvalues)
-1. [値を与えてGASを実行し、フィードバックされた値を取得する](help/README.md#executesgaswithvaluesandretrievesfeedbackedvalues)
-1. [デバッグ用](help/README.md#fordebug)
-1. [値を与えてGASを実行し、ファイルをダウンロードする](help/README.md#executesgaswithvaluesanddownloadsfile)
-1. [プロジェクト上の既存の関数を実行する](help/README.md#ExecutesExistingFunctionsonProject)
-1. [ファイルをダウンロードする](help/README.md#downloadfiles)
-1. [特定のフォルダ内のすべてのファイルとフォルダをダウンロードする](help/README.md#downloadfilesfromfolder)
-1. [ファイルをアップロードする](help/README.md#uploadfiles)
-1. [ファイルリストを表示する](help/README.md#showfilelist)
-1. [ファイルを検索する](help/README.md#searchfiles)
-1. [プロジェクトを更新する](help/README.md#updateproject)
-1. [変更履歴ファイルとプロジェクトのバージョンを取得する](help/README.md#revisionfile)
-1. [プロジェクト内のスクリプトを並べ替える](help/README.md#rearrangescripts)
-1. [マニフェストを変更する](help/README.md#modifymanifests)
-1. [クエリと正規表現を使ってファイルを検索する](help/README.md#searchfilesusingregex)
+1. [GASを実行して結果の値を取得する](help/README.ja.md#executesgasandretrievesresultvalues)
+1. [値を与えてGASを実行し、フィードバックされた値を取得する](help/README.ja.md#executesgaswithvaluesandretrievesfeedbackedvalues)
+1. [デバッグ用](help/README.ja.md#fordebug)
+1. [値を与えてGASを実行し、ファイルをダウンロードする](help/README.ja.md#executesgaswithvaluesanddownloadsfile)
+1. [プロジェクト上の既存の関数を実行する](help/README.ja.md#ExecutesExistingFunctionsonProject)
+1. [ファイルをダウンロードする](help/README.ja.md#downloadfiles)
+1. [特定のフォルダ内のすべてのファイルとフォルダをダウンロードする](help/README.ja.md#downloadfilesfromfolder)
+1. [ファイルをアップロードする](help/README.ja.md#uploadfiles)
+1. [ファイルリストを表示する](help/README.ja.md#showfilelist)
+1. [ファイルを検索する](help/README.ja.md#searchfiles)
+1. [プロジェクトを更新する](help/README.ja.md#updateproject)
+1. [変更履歴ファイルとプロジェクトのバージョンを取得する](help/README.ja.md#revisionfile)
+1. [プロジェクト内のスクリプトを並べ替える](help/README.ja.md#rearrangescripts)
+1. [マニフェストを変更する](help/README.ja.md#modifymanifests)
+1. [クエリと正規表現を使ってファイルを検索する](help/README.ja.md#searchfilesusingregex)
 1. [ファイルの権限を管理する](#managepermissions)
 1. [Driveの情報を取得する](#getdriveinformation)
 1. [ggsrunはOAuth2だけでなく、サービスアカウントでも使用できるようになった](#useserviceaccount)
 
 # 応用例
 
-1. [Sublime Text用](help/README.md#demosublime)
-1. [CoffeeScript用](help/README.md#coffeescript)
-1. [トリガーを作成する](help/README.md#createtriggers)
-1. [Pythonスクリプトへのリンク](help/README.md#linktovariousresources)
+1. [Sublime Text用](help/README.ja.md#demosublime)
+1. [CoffeeScript用](help/README.ja.md#coffeescript)
+1. [トリガーを作成する](help/README.ja.md#createtriggers)
+1. [Pythonスクリプトへのリンク](help/README.ja.md#linktovariousresources)
 
-# [Q&A](help/README.md#qa)
+# [Q&A](help/README.ja.md#qa)
 
-1. [スクリプト用のGoogleサービスへの認可](help/README.md#qa1)
-2. [結果が「Script Error on GAS side: Insufficient Permission」の場合](help/README.md#qa2)
-3. [結果が「"message": "Requested entity was not found."」の場合](help/README.md#qa3)
-4. [結果が「Script Error on GAS side: Script has attempted to perform an action that is not allowed when invoked through the Google Apps Script Execution API.」の場合](help/README.md#qa4)
-5. [結果が「Missing ';' before statement.」の場合](help/README.md#qa5)
-6. [ライブラリについて](help/README.md#qa6)
-7. [検索するディレクトリの順序](help/README.md#qa7)
+1. [スクリプト用のGoogleサービスへの認可](help/README.ja.md#qa1)
+2. [結果が「Script Error on GAS side: Insufficient Permission」の場合](help/README.ja.md#qa2)
+3. [結果が「"message": "Requested entity was not found."」の場合](help/README.ja.md#qa3)
+4. [結果が「Script Error on GAS side: Script has attempted to perform an action that is not allowed when invoked through the Google Apps Script Execution API.」の場合](help/README.ja.md#qa4)
+5. [結果が「Missing ';' before statement.」の場合](help/README.ja.md#qa5)
+6. [ライブラリについて](help/README.ja.md#qa6)
+7. [検索するディレクトリの順序](help/README.ja.md#qa7)
 
 ---
 
@@ -214,6 +214,6 @@ ggsrunは[サービスアカウント](https://developers.google.com/identity/pr
 
 更新履歴は**[こちら](help/UpdateHistory.md)**でご覧いただけます。
 
-<u>詳細なマニュアルを読みたい場合は、[こちら](help/README.md)をご確認ください。</u>
+<u>詳細なマニュアルを読みたい場合は、[こちら](help/README.ja.md)をご確認ください。</u>
 
 [TOP](#TOP)
