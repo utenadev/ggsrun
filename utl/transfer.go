@@ -31,12 +31,6 @@ const (
 	updateurl           = "https://www.googleapis.com/upload/drive/v3/files/"
 	lengthOfProjectId   = 57
 	maxSizeForMultipart = 5242880
-	defaultformat       = `{
-		"application/vnd.google-apps.document": "application/vnd.oasis.opendocument.text",
-		"application/vnd.google-apps.spreadsheet": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-		"application/vnd.google-apps.presentation": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-		"application/vnd.google-apps.drawing": "image/png"
-	}`
 )
 
 // FileInf : File information for downloading and uploading
