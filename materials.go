@@ -98,7 +98,8 @@ type Atoken struct {
 // ChkAt : Condition of accesstoken retrieved using Drive API
 type ChkAt struct {
 	Azu        string `json:"azu,omitempty"`
-	Aud        string `json:"aud,omitempty"`	Scope      string `json:"scope,omitempty"`
+	Aud        string `json:"aud,omitempty"`
+	Scope      string `json:"scope,omitempty"`
 	Exp        string `json:"exp,omitempty"`
 	Expiresin  string `json:"expires_in,omitempty"`
 	Accesstype string `json:"access_type,omitempty"`
