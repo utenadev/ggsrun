@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 
 	"ggsrun/utl"
 
@@ -353,9 +354,24 @@ func doExe1Function(c *cli.Context, initVal *InitVal, resMsg *ResMsg, ggsrunCfg 
 // and implemented correctly.
 
 func newAuthContainerForReAuth(c *cli.Context) (*InitVal, *GgsrunCfg, *Cs, error) {
-	fmt.Println("Warning: newAuthContainerForReAuth is a placeholder.")
-	// This placeholder needs to return valid pointers to avoid panics.
-	return new(InitVal), new(GgsrunCfg), new(Cs), nil
+	initVal := &InitVal{}
+	ggsrunCfg := &GgsrunCfg{}
+	cs := &Cs{}
+
+	var err error
+	initVal.pstart = time.Now()
+	initVal.workdir, err = os.Getwd()
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("could not get working directory: %w", err)
+	}
+	initVal.cfgdir, err = getConfigDir()
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("could not get config directory: %w", err)
+	}
+	initVal.useServiceAccount = c.String("serviceaccount")
+	initVal.log = c.Bool("log")
+
+	return initVal, ggsrunCfg, cs, nil
 }
 
 
