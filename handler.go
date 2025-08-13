@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"time"
+	"strings"
 
 	"ggsrun/utl"
 
@@ -16,33 +16,20 @@ import (
 // exeAPIWithout : exe1
 // Update project and Execution API withour server script.
 func exeAPIWithout(c *cli.Context) error {
-	initVal, resMsg, ggsrunCfg, param, cs, _, _, err := newAuthContainer(c)
+	initVal, _, ggsrunCfg, _, cs, _, _, err := newAuthContainer(c)
 	if err != nil {
 		return err
 	}
 
-	ggsrunCfg, param, cs, err = doGgsrunIni(c, initVal)
+		ggsrunCfg, _, cs, err = doGgsrunIni(c, initVal)
 	if err != nil {
 		return err
 	}
 
-	if err := doGoauth(initVal, ggsrunCfg, cs, resMsg); err != nil {
+	if err := doReAuth(initVal, ggsrunCfg, cs); err != nil {
 		return err
 	}
-
-	if err := doExe1Function(c, initVal, resMsg, ggsrunCfg, param); err != nil {
-		return err
-	}
-
-	resMsg.Msg = doExecutionAPIwithoutServer(param, resMsg.Msg)
-
-	feedBackData, msg, err := doEsenderForExe1(c, param, ggsrunCfg, initVal.pstart, resMsg.Msg)
-	if err != nil {
-		return err
-	}
-	resMsg.Msg = msg
-
-	doDispResult(c, feedBackData, resMsg.Msg)
+	fmt.Print("Done.")
 	return nil
 }
 
@@ -345,33 +332,19 @@ func commandNotFound(c *cli.Context, command string) {
 // The actual implementations should be provided.
 
 func doExe1Function(c *cli.Context, initVal *InitVal, resMsg *ResMsg, ggsrunCfg *GgsrunCfg, param *Param) error {
-	fmt.Println("Warning: doExe1Function is not implemented. This is a placeholder.")
+	upFiles := c.StringSlice("file")
+
+	res := doProjectUpdateControl(c, ggsrunCfg, upFiles, resMsg.Msg, initVal.pstart)
+	if len(res.Msgar) > 0 {
+		// Msgar にエラーメッセージが含まれている場合、エラーとして処理
+		return fmt.Errorf("project update failed: %s", strings.Join(res.Msgar, ", "))
+	}
+
+	resMsg.Msg = doExecutionAPIwithoutServer(param, resMsg.Msg)
+
 	return nil
 }
 
-// TODO: The following are placeholders to allow compilation.
-// They should be moved to their appropriate files (container.go, auth.go)
-// and implemented correctly.
 
-func newAuthContainerForReAuth(c *cli.Context) (*InitVal, *GgsrunCfg, *Cs, error) {
-	initVal := &InitVal{}
-	ggsrunCfg := &GgsrunCfg{}
-	cs := &Cs{}
-
-	var err error
-	initVal.pstart = time.Now()
-	initVal.workdir, err = os.Getwd()
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("could not get working directory: %w", err)
-	}
-	initVal.cfgdir, err = getConfigDir()
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("could not get config directory: %w", err)
-	}
-	initVal.useServiceAccount = c.String("serviceaccount")
-	initVal.log = c.Bool("log")
-
-	return initVal, ggsrunCfg, cs, nil
-}
 
 

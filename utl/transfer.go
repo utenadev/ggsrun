@@ -937,7 +937,7 @@ func (p *FileInf) createNewProject(c *cli.Context, metadata *newProject) {
 	asi := p.boundScriptCreator(meta)
 	p.FileID = asi.ScriptId
 	manifests := p.getBoundScript(asi.ScriptId).getManifests(c.String("timezone"))
-	pre := p.createProjectForAppsScriptApi(asi.ScriptId).setManifests(manifests)
+	pre := p.CreateProjectForAppsScriptApi(asi.ScriptId).setManifests(manifests)
 	_ = p.ProjectUpdateByAppsScriptApi(pre)
 	p.createdprojectresult(len(p.UpFilename), metadata.Title)
 }

@@ -238,7 +238,7 @@ func (p *FileInf) ProjectUpdateByAppsScriptApi(pr *ProjectForAppsScriptApi) *App
 }
 
 // createProjectForAppsScriptApi : Create json of project for Apps Script API.
-func (p *FileInf) createProjectForAppsScriptApi(scriptId string) *ProjectForAppsScriptApi {
+func (p *FileInf) CreateProjectForAppsScriptApi(scriptId string) *ProjectForAppsScriptApi {
 	pr := &ProjectForAppsScriptApi{}
 	pr.ScriptId = scriptId
 	if len(p.UpFilename) > 0 {

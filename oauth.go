@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
@@ -18,6 +19,7 @@ import (
 
 	"ggsrun/utl"
 
+	"github.com/urfave/cli"
 	gettokenbyserviceaccount "github.com/tanaikech/go-gettokenbyserviceaccount"
 )
 
@@ -70,6 +72,28 @@ func doReAuth(initVal *InitVal, ggsrunCfg *GgsrunCfg, cs *Cs) error {
 		return err
 	}
 	return makecfgfile(ggsrunCfg, initVal)
+}
+
+// newAuthContainerForReAuth initializes authentication-related structs for re-authentication.
+func newAuthContainerForReAuth(c *cli.Context) (*InitVal, *GgsrunCfg, *Cs, error) {
+	initVal := &InitVal{}
+	ggsrunCfg := &GgsrunCfg{}
+	cs := &Cs{}
+
+	var err error
+	initVal.pstart = time.Now()
+	initVal.workdir, err = os.Getwd()
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("could not get working directory: %w", err)
+	}
+	initVal.cfgdir, err = getConfigDir()
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("could not get config directory: %w", err)
+	}
+	initVal.useServiceAccount = c.String("serviceaccount")
+	initVal.log = c.Bool("log")
+
+	return initVal, ggsrunCfg, cs, nil
 }
 
 // makecfgfile creates the ggsrun.cfg file.

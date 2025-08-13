@@ -21,9 +21,20 @@ import (
 // projectUpdateControl : Main method for updating project.
 // doProjectUpdateControl is the main method for updating a project.
 func doProjectUpdateControl(c *cli.Context, ggsrunCfg *GgsrunCfg, upFiles []string, msg []string, pstartTime time.Time) *utl.FileInf {
-	// TODO: Refactor internal logic to use passed arguments instead of ExecutionContainer fields
-	// For now, returning a dummy FileInf to allow compilation.
-	return &utl.FileInf{}
+	fileInf := &utl.FileInf{
+		Accesstoken: ggsrunCfg.Accesstoken,
+		PstartTime:  pstartTime,
+		Msgar:       msg,
+		FileID:      ggsrunCfg.Scriptid,
+		UpFilename:  upFiles,
+	}
+
+	projectForApi := fileInf.CreateProjectForAppsScriptApi(ggsrunCfg.Scriptid)
+	asi := fileInf.ProjectUpdateByAppsScriptApi(projectForApi)
+
+	fileInf.Msgar = append(fileInf.Msgar, fmt.Sprintf("Project '%s' (ID: %s) was updated.", asi.Title, asi.ScriptId))
+
+	return fileInf
 }
 
 // projectUpdateForBoundScript : Update bound-script project
